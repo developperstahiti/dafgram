@@ -18,7 +18,10 @@ from app.db.models import (
     AccountType, SubscriptionPlan, UserRole,
     Budget, Transaction, Employee, SalesGoal, TimeCategory, TimeEntry,
     Document, Category, CategoryRule, BudgetCategory, BankImport,
-    Client, SavingsCategory, VatRate
+    Client, ClientAttachment, SavingsCategory, VatRate,
+    Invoice, InvoiceLineItem, InvoicePayment,
+    Quote, QuoteLineItem,
+    PaymentRetry, SubscriptionHistory, PaymentTransaction,
 )
 from app.core.security import get_current_active_user
 from app.core.config import settings
@@ -722,41 +725,60 @@ async def delete_space(
             current_user.current_company_id = other_uc.company_id
 
     # Supprimer toutes les données liées à cet espace
-    from sqlalchemy import text
-    tables_to_clean = [
-        "payment_retries", "subscription_history", "payment_transactions",
-        "bank_accounts", "savings_categories", "company_settings",
-        "vat_rates", "bank_imports", "budget_categories", "category_rules",
-        "categories", "documents", "time_entries", "time_categories",
-        "sales_goals", "employees", "transactions", "budgets",
-        "client_attachments", "invoice_line_items", "invoice_payments",
-        "quote_line_items", "quotes", "invoices", "clients",
-    ]
+    # 1. Tables enfants sans company_id direct (liées via parents)
+    # invoice_line_items & invoice_payments → via invoices
+    invoice_ids = [i.id for i in db.query(Invoice).filter(Invoice.company_id == company_id).all()]
+    if invoice_ids:
+        db.query(InvoiceLineItem).filter(InvoiceLineItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+        db.query(InvoicePayment).filter(InvoicePayment.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
 
-    for table in tables_to_clean:
-        try:
-            db.execute(text(f"DELETE FROM {table} WHERE company_id = :cid"), {"cid": company_id})
-        except Exception:
-            pass  # Table peut ne pas exister ou ne pas avoir company_id
+    # quote_line_items → via quotes
+    quote_ids = [q.id for q in db.query(Quote).filter(Quote.company_id == company_id).all()]
+    if quote_ids:
+        db.query(QuoteLineItem).filter(QuoteLineItem.quote_id.in_(quote_ids)).delete(synchronize_session=False)
 
-    # Supprimer client_attachments via clients (pas de company_id direct)
-    try:
-        client_ids = [c.id for c in db.query(Client).filter(Client.company_id == company_id).all()]
-        if client_ids:
-            from app.db.models import ClientAttachment
-            db.query(ClientAttachment).filter(ClientAttachment.client_id.in_(client_ids)).delete(synchronize_session=False)
-    except Exception:
-        pass
+    # client_attachments → via clients
+    client_ids = [c.id for c in db.query(Client).filter(Client.company_id == company_id).all()]
+    if client_ids:
+        db.query(ClientAttachment).filter(ClientAttachment.client_id.in_(client_ids)).delete(synchronize_session=False)
 
-    # Mettre à jour les users qui ont cet espace comme company_id principal
+    # bank_accounts → via company_settings
+    settings = db.query(CompanySettings).filter(CompanySettings.company_id == company_id).first()
+    if settings:
+        db.query(BankAccount).filter(BankAccount.company_settings_id == settings.id).delete(synchronize_session=False)
+
+    # 2. Tables avec company_id direct (ordre : enfants d'abord)
+    db.query(PaymentRetry).filter(PaymentRetry.company_id == company_id).delete(synchronize_session=False)
+    db.query(SubscriptionHistory).filter(SubscriptionHistory.company_id == company_id).delete(synchronize_session=False)
+    db.query(PaymentTransaction).filter(PaymentTransaction.company_id == company_id).delete(synchronize_session=False)
+    db.query(Invoice).filter(Invoice.company_id == company_id).delete(synchronize_session=False)
+    db.query(Quote).filter(Quote.company_id == company_id).delete(synchronize_session=False)
+    db.query(Client).filter(Client.company_id == company_id).delete(synchronize_session=False)
+    db.query(SavingsCategory).filter(SavingsCategory.company_id == company_id).delete(synchronize_session=False)
+    db.query(VatRate).filter(VatRate.company_id == company_id).delete(synchronize_session=False)
+    db.query(BankImport).filter(BankImport.company_id == company_id).delete(synchronize_session=False)
+    db.query(BudgetCategory).filter(BudgetCategory.company_id == company_id).delete(synchronize_session=False)
+    db.query(CategoryRule).filter(CategoryRule.company_id == company_id).delete(synchronize_session=False)
+    db.query(Category).filter(Category.company_id == company_id).delete(synchronize_session=False)
+    db.query(Document).filter(Document.company_id == company_id).delete(synchronize_session=False)
+    db.query(TimeEntry).filter(TimeEntry.company_id == company_id).delete(synchronize_session=False)
+    db.query(TimeCategory).filter(TimeCategory.company_id == company_id).delete(synchronize_session=False)
+    db.query(SalesGoal).filter(SalesGoal.company_id == company_id).delete(synchronize_session=False)
+    db.query(Employee).filter(Employee.company_id == company_id).delete(synchronize_session=False)
+    db.query(Transaction).filter(Transaction.company_id == company_id).delete(synchronize_session=False)
+    db.query(Budget).filter(Budget.company_id == company_id).delete(synchronize_session=False)
+    if settings:
+        db.query(CompanySettings).filter(CompanySettings.id == settings.id).delete(synchronize_session=False)
+
+    # 3. Mettre à jour les users qui ont cet espace comme company_id principal
     db.query(User).filter(User.company_id == company_id).update(
         {"company_id": current_user.current_company_id}, synchronize_session=False
     )
 
-    # Supprimer les liaisons user_companies pour TOUS les utilisateurs de cet espace
+    # 4. Supprimer les liaisons user_companies pour TOUS les utilisateurs de cet espace
     db.query(UserCompany).filter(UserCompany.company_id == company_id).delete(synchronize_session=False)
 
-    # Supprimer l'entreprise
+    # 5. Supprimer l'entreprise
     company = db.query(Company).filter(Company.id == company_id).first()
     if company:
         db.delete(company)
