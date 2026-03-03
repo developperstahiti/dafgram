@@ -203,7 +203,7 @@ export default function DashboardLayout({ children }: Props) {
           path: '/dashboard/budget',
           hasSubmenu: true,
           submenu: [
-            { text: 'Dépenses', path: '/dashboard/budget/charges' },
+            { text: 'Budgétisation', path: '/dashboard/budget/charges' },
             { text: 'Épargne', path: '/dashboard/budget/epargne' },
           ]
         },

@@ -101,6 +101,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
   const router = useRouter();
   const { currentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Utiliser la date externe si fournie, sinon état local
@@ -422,6 +423,25 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
     // Deuxième passage: traiter chaque catégorie de budget
     summary.categories.forEach(budgetCat => {
       const category = budgetCat.category;
+
+      // Pour les comptes personnels, inclure l'épargne dans le camembert
+      if (!category && isPersonalAccount && budgetCat.is_savings && budgetCat.percentage > 0) {
+        const savingsId = -1; // ID fictif pour l'épargne
+        parentMap.set(savingsId, {
+          id: savingsId,
+          name: 'Épargne',
+          color: '#10B981',
+          totalPercentage: budgetCat.percentage,
+          totalAllocated: budgetCat.allocated_amount,
+          totalCarriedOver: budgetCat.carried_over,
+          totalAvailable: budgetCat.total_available,
+          totalSpent: budgetCat.spent_amount,
+          totalRemaining: budgetCat.remaining_amount,
+          subcategories: [],
+        });
+        return;
+      }
+
       if (!category) return;
 
       const isSubcategory = !!category.parent_id;
@@ -1867,7 +1887,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
-                    Charges
+                    {isPersonalAccount ? 'Budgétisation' : 'Charges'}
                   </Typography>
                   <Box sx={{ textAlign: 'right' }}>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>

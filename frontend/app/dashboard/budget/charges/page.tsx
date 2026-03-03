@@ -369,11 +369,11 @@ export default function ChargesPage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
-          {isPersonalAccount ? 'Dépenses' : 'Charges'}
+          {isPersonalAccount ? 'Budgétisation' : 'Charges'}
         </Typography>
         <Typography variant="body1" color="text.secondary">
           {isPersonalAccount
-            ? 'Gérez votre budget et suivez vos dépenses'
+            ? 'Gérez votre budget selon la règle 50/30/20'
             : 'Gérez vos charges et suivez les dépenses de celles-ci'}
         </Typography>
       </Box>
