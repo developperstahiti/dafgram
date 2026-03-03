@@ -43,24 +43,17 @@ DEFAULT_SAVINGS_CATEGORIES = [
 # Catégories d'épargne par défaut (personnel)
 DEFAULT_PERSONAL_SAVINGS_CATEGORIES = [
     {
-        "name": "Fonds d'urgence",
-        "description": "Réserve financière pour les situations imprévues : réparations, santé, perte de revenus.",
-        "color": "#EF4444",
-        "percentage": 40,
+        "name": "Trading",
+        "description": "Investissements et trading.",
+        "color": "#F59E0B",
+        "percentage": 50,
         "is_default": True
     },
     {
-        "name": "Vacances",
-        "description": "Épargne pour les voyages, vacances et loisirs.",
-        "color": "#3B82F6",
-        "percentage": 30,
-        "is_default": True
-    },
-    {
-        "name": "Projets personnels",
-        "description": "Financer un projet personnel : déménagement, achat important, formation.",
+        "name": "Projet perso",
+        "description": "Projets personnels à financer.",
         "color": "#8B5CF6",
-        "percentage": 30,
+        "percentage": 50,
         "is_default": True
     }
 ]

@@ -167,9 +167,8 @@ def _seed_personal_defaults(db: Session, company_id: int):
 
     # Catégories d'épargne personnelles (sous-catégories du 20%)
     savings = [
-        {"name": "Fonds d'urgence", "description": "Réserve pour les imprévus", "color": "#EF4444", "percentage": 40},
-        {"name": "Vacances", "description": "Budget voyages et vacances", "color": "#3B82F6", "percentage": 30},
-        {"name": "Projets", "description": "Projets personnels à financer", "color": "#8B5CF6", "percentage": 30},
+        {"name": "Trading", "description": "Investissements et trading", "color": "#F59E0B", "percentage": 50},
+        {"name": "Projet perso", "description": "Projets personnels à financer", "color": "#8B5CF6", "percentage": 50},
     ]
     for sav_data in savings:
         db.add(SavingsCategory(
