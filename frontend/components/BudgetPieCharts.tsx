@@ -3075,30 +3075,104 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
               <Typography color="text.secondary">
                 Aucune dépense pour ce mois
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, maxWidth: 300, mx: 'auto' }}>
-                Importez vos relevés bancaires (PDF ou CSV) pour voir vos transactions ici
-              </Typography>
-              <Box
-                component="button"
-                onClick={() => {
-                  handleCloseDetailDialog();
-                  router.push('/dashboard/banque');
-                }}
-                sx={{
-                  mt: 2,
-                  px: 3,
-                  py: 1,
-                  bgcolor: adaptColorForTheme(selectedDetailCategory?.category?.color || '#3B82F6'),
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 2,
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  '&:hover': { opacity: 0.9 },
-                }}
-              >
-                Importer des transactions
-              </Box>
+              {isPersonalAccount ? (
+                <Box sx={{ mt: 3, p: 2, bgcolor: '#FFF', border: '1px solid #E5E7EB', borderRadius: 2, textAlign: 'left', maxWidth: 400, mx: 'auto' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                    Enregistrer une dépense
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Montant"
+                      type="number"
+                      value={personalTxAmount}
+                      onChange={(e) => setPersonalTxAmount(e.target.value)}
+                      inputProps={{ min: 0, step: '0.01' }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Description (optionnel)"
+                      value={personalTxDesc}
+                      onChange={(e) => setPersonalTxDesc(e.target.value)}
+                      sx={{ flex: 2 }}
+                    />
+                  </Box>
+                  {personalTxError && (
+                    <Typography variant="caption" sx={{ color: '#EF4444', display: 'block', mb: 1 }}>
+                      {personalTxError}
+                    </Typography>
+                  )}
+                  {personalTxSuccess && (
+                    <Typography variant="caption" sx={{ color: '#10B981', display: 'block', mb: 1 }}>
+                      Dépense enregistrée !
+                    </Typography>
+                  )}
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    disabled={personalTxSaving || !personalTxAmount}
+                    onClick={async () => {
+                      setPersonalTxSaving(true);
+                      setPersonalTxError(null);
+                      setPersonalTxSuccess(false);
+                      try {
+                        await transactionsAPI.create({
+                          type: 'expense',
+                          amount: parseFloat(personalTxAmount),
+                          description: personalTxDesc || selectedDetailCategory?.category?.name || 'Dépense',
+                          category_id: selectedDetailCategory?.category_id,
+                          company_id: user?.company_id,
+                          account_type: 'company',
+                        });
+                        setPersonalTxAmount('');
+                        setPersonalTxDesc('');
+                        setPersonalTxSuccess(true);
+                        window.dispatchEvent(new CustomEvent('refresh-budget-data'));
+                        setTimeout(() => setPersonalTxSuccess(false), 3000);
+                      } catch (err: any) {
+                        setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
+                      } finally {
+                        setPersonalTxSaving(false);
+                      }
+                    }}
+                    sx={{
+                      bgcolor: '#EF4444',
+                      fontWeight: 600,
+                      '&:hover': { bgcolor: '#DC2626' },
+                    }}
+                  >
+                    {personalTxSaving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Enregistrer'}
+                  </Button>
+                </Box>
+              ) : (
+                <>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, maxWidth: 300, mx: 'auto' }}>
+                    Importez vos relevés bancaires (PDF ou CSV) pour voir vos transactions ici
+                  </Typography>
+                  <Box
+                    component="button"
+                    onClick={() => {
+                      handleCloseDetailDialog();
+                      router.push('/dashboard/banque');
+                    }}
+                    sx={{
+                      mt: 2,
+                      px: 3,
+                      py: 1,
+                      bgcolor: adaptColorForTheme(selectedDetailCategory?.category?.color || '#3B82F6'),
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      '&:hover': { opacity: 0.9 },
+                    }}
+                  >
+                    Importer des transactions
+                  </Box>
+                </>
+              )}
             </Box>
           )}
         </DialogContent>
@@ -3229,30 +3303,104 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                   <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
                     Aucune transaction pour cette catégorie ce mois-ci
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, maxWidth: 300, mx: 'auto' }}>
-                    Importez vos relevés bancaires (PDF ou CSV) pour voir vos transactions ici
-                  </Typography>
-                  <Box
-                    component="button"
-                    onClick={() => {
-                      handleCloseDrillDownDialog();
-                      router.push('/dashboard/banque');
-                    }}
-                    sx={{
-                      mt: 2,
-                      px: 3,
-                      py: 1,
-                      bgcolor: adaptColorForTheme(selectedCategoryData?.color || '#3B82F6'),
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      '&:hover': { opacity: 0.9 },
-                    }}
-                  >
-                    Importer des transactions
-                  </Box>
+                  {isPersonalAccount ? (
+                    <Box sx={{ mt: 3, p: 2, bgcolor: '#FFF', border: '1px solid #E5E7EB', borderRadius: 2, textAlign: 'left', maxWidth: 400, mx: 'auto' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                        Enregistrer une dépense
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        <TextField
+                          size="small"
+                          label="Montant"
+                          type="number"
+                          value={personalTxAmount}
+                          onChange={(e) => setPersonalTxAmount(e.target.value)}
+                          inputProps={{ min: 0, step: '0.01' }}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          size="small"
+                          label="Description (optionnel)"
+                          value={personalTxDesc}
+                          onChange={(e) => setPersonalTxDesc(e.target.value)}
+                          sx={{ flex: 2 }}
+                        />
+                      </Box>
+                      {personalTxError && (
+                        <Typography variant="caption" sx={{ color: '#EF4444', display: 'block', mb: 1 }}>
+                          {personalTxError}
+                        </Typography>
+                      )}
+                      {personalTxSuccess && (
+                        <Typography variant="caption" sx={{ color: '#10B981', display: 'block', mb: 1 }}>
+                          Dépense enregistrée !
+                        </Typography>
+                      )}
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        disabled={personalTxSaving || !personalTxAmount}
+                        onClick={async () => {
+                          setPersonalTxSaving(true);
+                          setPersonalTxError(null);
+                          setPersonalTxSuccess(false);
+                          try {
+                            await transactionsAPI.create({
+                              type: 'expense',
+                              amount: parseFloat(personalTxAmount),
+                              description: personalTxDesc || selectedCategoryData?.name || 'Dépense',
+                              category_id: selectedCategoryData?.id,
+                              company_id: user?.company_id,
+                              account_type: 'company',
+                            });
+                            setPersonalTxAmount('');
+                            setPersonalTxDesc('');
+                            setPersonalTxSuccess(true);
+                            window.dispatchEvent(new CustomEvent('refresh-budget-data'));
+                            setTimeout(() => setPersonalTxSuccess(false), 3000);
+                          } catch (err: any) {
+                            setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
+                          } finally {
+                            setPersonalTxSaving(false);
+                          }
+                        }}
+                        sx={{
+                          bgcolor: '#EF4444',
+                          fontWeight: 600,
+                          '&:hover': { bgcolor: '#DC2626' },
+                        }}
+                      >
+                        {personalTxSaving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Enregistrer'}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, maxWidth: 300, mx: 'auto' }}>
+                        Importez vos relevés bancaires (PDF ou CSV) pour voir vos transactions ici
+                      </Typography>
+                      <Box
+                        component="button"
+                        onClick={() => {
+                          handleCloseDrillDownDialog();
+                          router.push('/dashboard/banque');
+                        }}
+                        sx={{
+                          mt: 2,
+                          px: 3,
+                          py: 1,
+                          bgcolor: adaptColorForTheme(selectedCategoryData?.color || '#3B82F6'),
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                          '&:hover': { opacity: 0.9 },
+                        }}
+                      >
+                        Importer des transactions
+                      </Box>
+                    </>
+                  )}
                 </Box>
               )}
             </>
