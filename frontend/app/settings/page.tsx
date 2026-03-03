@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useCompanyStore } from '@/store/companyStore';
 import { companiesAPI } from '@/lib/api';
@@ -38,12 +39,24 @@ import {
   CameraAlt,
   Edit as EditIcon,
   Warning as WarningIcon,
+  DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 
 export default function SettingsPage() {
   const theme = useTheme();
+  const router = useRouter();
   const { currentCompany, fetchCurrentCompany, updateCompany, isLoading } = useCompanyStore();
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -160,6 +173,24 @@ export default function SettingsPage() {
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSpace = async () => {
+    if (!currentCompany) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await companiesAPI.deleteSpace(currentCompany.id);
+      setDeleteDialogOpen(false);
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: any) {
+      const detail = err.response?.data?.detail;
+      setDeleteError(typeof detail === 'string' ? detail : 'Erreur lors de la suppression de l\'espace');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -573,7 +604,101 @@ export default function SettingsPage() {
             </Box>
           </Paper>
         </Grid>
+        {/* Zone de danger */}
+        <Grid item xs={12}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 4,
+              border: '1px solid',
+              borderColor: alpha('#EF4444', 0.3),
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <WarningIcon sx={{ color: '#EF4444', fontSize: 20 }} />
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#EF4444' }}>
+                Zone de danger
+              </Typography>
+            </Box>
+
+            <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
+              La suppression de cet espace est irréversible. Toutes les données associées (transactions, budgets, documents, employés) seront définitivement supprimées.
+            </Typography>
+
+            <Button
+              variant="outlined"
+              startIcon={<DeleteIcon />}
+              onClick={() => { setDeleteError(null); setDeleteDialogOpen(true); }}
+              sx={{
+                borderColor: '#EF4444',
+                color: '#EF4444',
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#DC2626',
+                  bgcolor: alpha('#EF4444', 0.08),
+                },
+              }}
+            >
+              Supprimer cet espace
+            </Button>
+          </Paper>
+        </Grid>
       </Grid>
+
+      {/* Dialog de confirmation de suppression */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => !isDeleting && setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#EF4444' }}>
+          Supprimer l'espace "{currentCompany?.name}"
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+            Cette action est irréversible. Toutes les données de cet espace seront définitivement supprimées :
+          </Typography>
+          <Box component="ul" sx={{ color: 'text.secondary', pl: 2, '& li': { mb: 0.5 } }}>
+            <li>Transactions et imports bancaires</li>
+            <li>Budgets et catégories</li>
+            <li>Documents et factures</li>
+            <li>Employés et objectifs de vente</li>
+            <li>Catégories d'épargne</li>
+          </Box>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={isDeleting}
+            sx={{ color: 'text.secondary' }}
+          >
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteSpace}
+            disabled={isDeleting}
+            sx={{
+              bgcolor: '#EF4444',
+              fontWeight: 600,
+              '&:hover': { bgcolor: '#DC2626' },
+            }}
+          >
+            {isDeleting ? (
+              <CircularProgress size={20} sx={{ color: '#fff' }} />
+            ) : (
+              'Confirmer la suppression'
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DashboardLayout>
   );
 }
