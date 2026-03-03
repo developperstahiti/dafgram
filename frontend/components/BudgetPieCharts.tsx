@@ -2439,12 +2439,12 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                             category_id: selectedSubcategory.subcategory.category_id,
                             company_id: user?.company_id,
                             account_type: 'company',
+                            transaction_date: new Date().toISOString(),
                           });
                           setPersonalTxAmount('');
                           setPersonalTxDesc('');
                           setPersonalTxSuccess(true);
-                          // Rafraîchir les données
-                          window.dispatchEvent(new CustomEvent('refresh-budget-data'));
+                          await fetchData();
                           setTimeout(() => setPersonalTxSuccess(false), 3000);
                         } catch (err: any) {
                           setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
@@ -3124,11 +3124,12 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                           category_id: selectedDetailCategory?.category_id,
                           company_id: user?.company_id,
                           account_type: 'company',
+                          transaction_date: new Date().toISOString(),
                         });
                         setPersonalTxAmount('');
                         setPersonalTxDesc('');
                         setPersonalTxSuccess(true);
-                        window.dispatchEvent(new CustomEvent('refresh-budget-data'));
+                        await fetchData();
                         setTimeout(() => setPersonalTxSuccess(false), 3000);
                       } catch (err: any) {
                         setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
@@ -3352,11 +3353,12 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                               category_id: selectedCategoryData?.id,
                               company_id: user?.company_id,
                               account_type: 'company',
+                              transaction_date: new Date().toISOString(),
                             });
                             setPersonalTxAmount('');
                             setPersonalTxDesc('');
                             setPersonalTxSuccess(true);
-                            window.dispatchEvent(new CustomEvent('refresh-budget-data'));
+                            await fetchData();
                             setTimeout(() => setPersonalTxSuccess(false), 3000);
                           } catch (err: any) {
                             setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
