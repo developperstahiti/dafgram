@@ -27,10 +27,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -41,10 +37,8 @@ import {
   Build as BuildIcon,
   AdminPanelSettings as AdminIcon,
   Visibility as ViewIcon,
-  Add as AddIcon,
 } from '@mui/icons-material';
 import { transactionsAPI, Transaction, bankAPI, Category } from '@/lib/api';
-import { formatCurrency } from '@/lib/currency';
 import { useCompanyStore } from '@/store/companyStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -84,12 +78,10 @@ export default function DashboardPage() {
   const [txType, setTxType] = useState<'revenue' | 'expense'>('expense');
   const [txAmount, setTxAmount] = useState('');
   const [txDescription, setTxDescription] = useState('');
-  const [txCategoryId, setTxCategoryId] = useState<number>(0);
   const [txCategories, setTxCategories] = useState<Category[]>([]);
   const [txSaving, setTxSaving] = useState(false);
-  const currency = currentCompany?.currency || 'EUR';
 
-  // Charger les catégories pour le dialog
+  // Charger les catégories pour auto-sélection
   useEffect(() => {
     if (!isPersonalAccount) return;
     bankAPI.getCategories(undefined, false).then(res => {
@@ -101,19 +93,21 @@ export default function DashboardPage() {
     setTxType(type);
     setTxAmount('');
     setTxDescription('');
-    setTxCategoryId(0);
     setTxDialogOpen(true);
   };
 
   const handleCreateTransaction = async () => {
-    if (!txAmount || txCategoryId === 0) return;
+    if (!txAmount) return;
+    // Auto-sélectionner la première catégorie du type correspondant
+    const autoCategory = txCategories.find(c => c.type === txType);
+    if (!autoCategory) return;
     setTxSaving(true);
     try {
       await transactionsAPI.create({
         type: txType,
         amount: parseFloat(txAmount),
         description: txDescription,
-        category_id: txCategoryId,
+        category_id: autoCategory.id,
         account_type: 'company',
       });
       setTxDialogOpen(false);
@@ -530,27 +524,6 @@ export default function DashboardPage() {
               autoFocus
               inputProps={{ min: 0, step: '0.01' }}
             />
-            <FormControl fullWidth>
-              <InputLabel>Catégorie</InputLabel>
-              <Select
-                value={txCategoryId}
-                label="Catégorie"
-                onChange={(e) => setTxCategoryId(Number(e.target.value))}
-              >
-                <MenuItem value={0} disabled>Choisir une catégorie</MenuItem>
-                {txCategories
-                  .filter(c => c.type === txType)
-                  .map(c => (
-                    <MenuItem key={c.id} value={c.id}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c.color || '#6B7280' }} />
-                        {c.name}
-                      </Box>
-                    </MenuItem>
-                  ))
-                }
-              </Select>
-            </FormControl>
             <TextField
               fullWidth
               label="Description (optionnel)"
@@ -569,7 +542,7 @@ export default function DashboardPage() {
             <Button
               variant="contained"
               onClick={handleCreateTransaction}
-              disabled={txSaving || !txAmount || txCategoryId === 0}
+              disabled={txSaving || !txAmount}
               sx={{
                 bgcolor: txType === 'revenue' ? '#10B981' : '#EF4444',
                 fontWeight: 600,
