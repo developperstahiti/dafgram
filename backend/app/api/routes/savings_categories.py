@@ -43,17 +43,24 @@ DEFAULT_SAVINGS_CATEGORIES = [
 # Catégories d'épargne par défaut (personnel)
 DEFAULT_PERSONAL_SAVINGS_CATEGORIES = [
     {
-        "name": "Trading",
-        "description": "Investissements et trading.",
+        "name": "Trading long terme",
+        "description": "Investissements et trading long terme.",
         "color": "#F59E0B",
         "percentage": 50,
+        "is_default": True
+    },
+    {
+        "name": "Trading moyen terme",
+        "description": "Trading et investissements moyen terme.",
+        "color": "#10B981",
+        "percentage": 30,
         "is_default": True
     },
     {
         "name": "Projet perso",
         "description": "Projets personnels à financer.",
         "color": "#8B5CF6",
-        "percentage": 50,
+        "percentage": 20,
         "is_default": True
     }
 ]

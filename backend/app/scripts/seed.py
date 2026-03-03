@@ -286,8 +286,9 @@ def migrate_personal_accounts():
 
             if existing_savings == 0:
                 for name, desc, color, pct in [
-                    ("Trading", "Investissements et trading", "#F59E0B", 50),
-                    ("Projet perso", "Projets personnels à financer", "#8B5CF6", 50),
+                    ("Trading long terme", "Investissements et trading long terme", "#F59E0B", 50),
+                    ("Trading moyen terme", "Trading et investissements moyen terme", "#10B981", 30),
+                    ("Projet perso", "Projets personnels à financer", "#8B5CF6", 20),
                 ]:
                     db.add(SavingsCategory(
                         company_id=cid,
