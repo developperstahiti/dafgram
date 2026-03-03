@@ -8,30 +8,17 @@ if (API_BASE_URL.includes('dafgram.com')) {
 }
 export { API_BASE_URL };
 
-// Instance axios SANS baseURL — sera défini dynamiquement à chaque requête
+// Instance axios SANS baseURL — les requêtes /api/* vont au même domaine
+// et sont proxiées vers le backend par les rewrites Next.js (next.config.js)
+// Cela élimine les erreurs Mixed Content car tout reste en same-origin.
 export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Intercepteur : définit le baseURL dynamiquement + ajoute le token JWT
+// Intercepteur : ajoute le token JWT
 api.interceptors.request.use((config) => {
-  // Définir le baseURL à chaque requête en fonction du contexte d'exécution
-  if (typeof window !== 'undefined') {
-    // Côté navigateur : utiliser le protocole de la page pour éviter Mixed Content
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    if (isLocal) {
-      config.baseURL = 'http://localhost:8000';
-    } else {
-      // Toujours utiliser le même protocole que la page (https: en prod)
-      config.baseURL = window.location.protocol + '//api.dafgram.com';
-    }
-  } else {
-    // Côté serveur (SSR) : utiliser la variable d'environnement
-    config.baseURL = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000';
-  }
-
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
