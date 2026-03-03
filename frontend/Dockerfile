@@ -5,9 +5,8 @@ RUN npm ci
 COPY . .
 
 ARG NEXT_PUBLIC_API_BASE
-ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
-
-RUN npm run build
+# Forcer HTTPS pour éviter Mixed Content en production
+RUN export NEXT_PUBLIC_API_BASE=$(echo "${NEXT_PUBLIC_API_BASE}" | sed 's|^http://|https://|') && npm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app

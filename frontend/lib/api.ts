@@ -17,8 +17,12 @@ function getApiBase(): string {
 export const API_BASE_URL = getApiBase();
 
 // Instance axios avec baseURL dynamique
+const resolvedBase = getApiBase();
+if (typeof window !== 'undefined') {
+  console.log('[DafGram API] baseURL =', resolvedBase);
+}
 export const api = axios.create({
-  baseURL: getApiBase(),
+  baseURL: resolvedBase,
   headers: {
     'Content-Type': 'application/json',
   },
