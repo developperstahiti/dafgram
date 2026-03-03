@@ -42,7 +42,7 @@ import { format, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useCompanyStore } from '@/store/companyStore';
 import { formatCurrency } from '@/lib/currency';
-import { savingsCategoriesAPI, transactionsAPI, SavingsCategory, SavingsCategorySummary, Transaction } from '@/lib/api';
+import { savingsCategoriesAPI, transactionsAPI, SavingsCategory, SavingsCategorySummary, Transaction, API_BASE_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { format as formatDate } from 'date-fns';
 
@@ -666,7 +666,7 @@ export default function SavingsPieCharts({
                     }}
                   >
                     <img
-                      src={`http://localhost:8000${currentCompany.logo_url}`}
+                      src={`${API_BASE_URL}${currentCompany.logo_url}`}
                       alt="Logo"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

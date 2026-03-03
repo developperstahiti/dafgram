@@ -1,10 +1,17 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || (
+let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || (
   typeof window !== 'undefined' && window.location.hostname !== 'localhost'
     ? 'https://api.dafgram.com'
     : 'http://localhost:8000'
 );
+
+// Forcer HTTPS en production pour éviter les erreurs Mixed Content
+if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http://')) {
+  API_BASE_URL = API_BASE_URL.replace('http://', 'https://');
+}
+
+export { API_BASE_URL };
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

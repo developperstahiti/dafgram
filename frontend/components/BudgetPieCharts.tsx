@@ -57,7 +57,7 @@ import {
   Tooltip as RechartsTooltip,
   Sector,
 } from 'recharts';
-import { budgetCategoriesAPI, BudgetSummary, BudgetCategory, transactionsAPI, Transaction, bankAPI, Category } from '@/lib/api';
+import { budgetCategoriesAPI, BudgetSummary, BudgetCategory, transactionsAPI, Transaction, bankAPI, Category, API_BASE_URL } from '@/lib/api';
 import { format, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useCompanyStore } from '@/store/companyStore';
@@ -1983,7 +1983,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                         }}
                       >
                         <img
-                          src={`http://localhost:8000${currentCompany.logo_url}`}
+                          src={`${API_BASE_URL}${currentCompany.logo_url}`}
                           alt="Logo"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />

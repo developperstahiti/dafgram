@@ -44,7 +44,7 @@ import {
 } from 'recharts';
 import { format, addMonths, subMonths } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { timeEntriesAPI, TimeSummary, TimeSummaryByCategory, TimeEntry } from '@/lib/api';
+import { timeEntriesAPI, TimeSummary, TimeSummaryByCategory, TimeEntry, API_BASE_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { format as formatDate } from 'date-fns';
 import { useCompanyStore } from '@/store/companyStore';
@@ -696,7 +696,7 @@ export default function TimePieCharts({
                     }}
                   >
                     <img
-                      src={`http://localhost:8000${currentCompany.logo_url}`}
+                      src={`${API_BASE_URL}${currentCompany.logo_url}`}
                       alt="Logo"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
