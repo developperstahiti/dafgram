@@ -76,6 +76,7 @@ export interface CompanyData {
   postal_code?: string;
   country?: string;
   vat_number?: string;
+  account_type?: string;
 }
 
 export interface RegisterData {
