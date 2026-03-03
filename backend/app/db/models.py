@@ -148,6 +148,9 @@ class Company(Base):
     is_active = Column(Boolean, default=True)
     name_changed = Column(Boolean, default=False)  # True si le nom a déjà été modifié (une seule fois autorisé)
 
+    # Code d'invitation pour rejoindre l'entreprise
+    invite_code = Column(String(20), unique=True, nullable=True, index=True)
+
     # Relations
     users = relationship("User", back_populates="company", foreign_keys="User.company_id")
     user_companies = relationship("UserCompany", back_populates="company")

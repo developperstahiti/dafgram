@@ -255,10 +255,7 @@ function RegisterContent() {
       }
       setActiveStep(3);
     } else if (activeStep === 3) {
-      // Uniquement pour Pro, car Personnel est "en développement"
-      if (accountType === 'business') {
-        handleSubmit();
-      }
+      handleSubmit();
     }
   };
 
@@ -286,16 +283,27 @@ function RegisterContent() {
     setError(null);
 
     try {
-      const companyPayload = {
-        name: companyData.name,
-        email: companyData.contact_email || personalData.email,
-        phone: companyData.contact_phone || personalData.phone,
-        legal_form: companyData.legal_form,
-        year_created: companyData.year_created,
-        expertise_domain: companyData.expertise_domain,
-        contact_name: `${companyData.contact_first_name} ${companyData.contact_last_name}`,
-        account_type: 'business',
-      };
+      let companyPayload;
+
+      if (accountType === 'personal') {
+        companyPayload = {
+          name: `${personalData.first_name} ${personalData.last_name}`,
+          email: personalData.email,
+          phone: personalData.phone,
+          account_type: 'personal',
+        };
+      } else {
+        companyPayload = {
+          name: companyData.name,
+          email: companyData.contact_email || personalData.email,
+          phone: companyData.contact_phone || personalData.phone,
+          legal_form: companyData.legal_form,
+          year_created: companyData.year_created,
+          expertise_domain: companyData.expertise_domain,
+          contact_name: `${companyData.contact_first_name} ${companyData.contact_last_name}`,
+          account_type: 'business',
+        };
+      }
 
       const response = await authAPI.registerCompany({
         company: companyPayload,
@@ -304,13 +312,16 @@ function RegisterContent() {
         full_name: `${personalData.first_name} ${personalData.last_name}`,
       });
 
-      // Stocker le token et rediriger vers le paiement
       if (response.data.access_token) {
         localStorage.setItem('access_token', response.data.access_token);
-        // Stocker le cycle de facturation choisi
-        localStorage.setItem('billing_cycle', isYearly ? 'yearly' : 'monthly');
-        // Rediriger vers la page de paiement
-        router.push('/payment');
+        if (accountType === 'personal') {
+          // Compte personnel : aller directement au dashboard
+          router.push('/dashboard');
+        } else {
+          // Compte pro : aller au paiement
+          localStorage.setItem('billing_cycle', isYearly ? 'yearly' : 'monthly');
+          router.push('/payment');
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Erreur lors de l\'inscription');
@@ -699,66 +710,73 @@ function RegisterContent() {
     // Étape 3 : Tarifs
     if (step === 3) {
       if (accountType === 'personal') {
-        // Page "En développement" pour Personnel
         return (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Box
-              sx={{
-                width: 120,
-                height: 120,
-                borderRadius: '50%',
-                bgcolor: '#FEF3C7',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 3,
-              }}
-            >
-              <ConstructionIcon sx={{ fontSize: 60, color: '#F59E0B' }} />
-            </Box>
-
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-              Fonctionnalité en cours de développement
+          <Box>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, textAlign: 'center' }}>
+              Finalisez votre inscription
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3, textAlign: 'center' }}>
+              Créez votre mot de passe pour accéder à votre espace personnel
             </Typography>
 
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
-              L'offre personnelle de DafGram est actuellement en développement.
-              Nous travaillons dur pour vous offrir la meilleure expérience possible.
-            </Typography>
+            {/* Mot de passe */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  type="password"
+                  label="Mot de passe"
+                  value={userData.password}
+                  onChange={(e) => setUserData({ ...userData, password: e.target.value })}
+                  required
+                  helperText="Minimum 6 caractères"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  type="password"
+                  label="Confirmer le mot de passe"
+                  value={userData.confirmPassword}
+                  onChange={(e) => setUserData({ ...userData, confirmPassword: e.target.value })}
+                  required
+                />
+              </Grid>
+            </Grid>
 
-            <Box sx={{ bgcolor: '#F9FAFB', borderRadius: 3, p: 3, maxWidth: 400, mx: 'auto', mb: 3 }}>
+            {/* Récapitulatif */}
+            <Box sx={{ p: 3, bgcolor: '#F9FAFB', borderRadius: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                Vos besoins sélectionnés :
+                Récapitulatif
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-                {selectedNeeds.map(needId => {
-                  const need = personalNeeds.find(n => n.id === needId);
-                  return need ? (
-                    <Chip
-                      key={needId}
-                      label={need.label}
-                      size="small"
-                      sx={{ bgcolor: '#F5C51820', color: '#92400E' }}
-                    />
-                  ) : null;
-                })}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography>Compte</Typography>
+                <Typography sx={{ fontWeight: 600 }}>Personnel</Typography>
               </Box>
-            </Box>
-
-            <Alert severity="info" sx={{ maxWidth: 500, mx: 'auto' }}>
-              <Typography variant="body2">
-                Laissez-nous vos coordonnées et nous vous contacterons dès que l'offre personnelle sera disponible !
-              </Typography>
-            </Alert>
-
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                En attendant, vous pouvez nous contacter à :
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600, color: '#F5C518' }}>
-                contact@dafgram.com
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography>Utilisateur</Typography>
+                <Typography sx={{ fontWeight: 600 }}>
+                  {personalData.first_name} {personalData.last_name}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography>Email</Typography>
+                <Typography sx={{ fontWeight: 600 }}>{personalData.email}</Typography>
+              </Box>
+              {selectedNeeds.length > 0 && (
+                <>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Vos besoins :</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selectedNeeds.map(needId => {
+                      const need = personalNeeds.find(n => n.id === needId);
+                      return need ? (
+                        <Chip key={needId} label={need.label} size="small" sx={{ bgcolor: '#F5C51820', color: '#92400E' }} />
+                      ) : null;
+                    })}
+                  </Box>
+                </>
+              )}
             </Box>
           </Box>
         );
@@ -1006,51 +1024,28 @@ function RegisterContent() {
                 Retour
               </Button>
 
-              {/* Bouton suivant/créer */}
-              {!(activeStep === 3 && accountType === 'personal') && (
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={isLoading}
-                  sx={{
-                    bgcolor: '#F5C518',
-                    color: '#1A1A1A',
-                    fontWeight: 600,
-                    px: 4,
-                    '&:hover': {
-                      bgcolor: '#E0B000',
-                    },
-                  }}
-                >
-                  {isLoading ? (
-                    <CircularProgress size={24} sx={{ color: '#1A1A1A' }} />
-                  ) : activeStep === 3 && accountType === 'business' ? (
-                    'Créer mon compte'
-                  ) : (
-                    'Continuer'
-                  )}
-                </Button>
-              )}
-
-              {/* Bouton spécial pour Personnel à l'étape tarifs */}
-              {activeStep === 3 && accountType === 'personal' && (
-                <Button
-                  variant="outlined"
-                  onClick={() => router.push('/')}
-                  sx={{
-                    borderColor: '#F5C518',
-                    color: '#F5C518',
-                    fontWeight: 600,
-                    px: 4,
-                    '&:hover': {
-                      borderColor: '#E0B000',
-                      bgcolor: '#F5C51810',
-                    },
-                  }}
-                >
-                  Retour à l'accueil
-                </Button>
-              )}
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                disabled={isLoading}
+                sx={{
+                  bgcolor: '#F5C518',
+                  color: '#1A1A1A',
+                  fontWeight: 600,
+                  px: 4,
+                  '&:hover': {
+                    bgcolor: '#E0B000',
+                  },
+                }}
+              >
+                {isLoading ? (
+                  <CircularProgress size={24} sx={{ color: '#1A1A1A' }} />
+                ) : activeStep === 3 ? (
+                  'Créer mon compte'
+                ) : (
+                  'Continuer'
+                )}
+              </Button>
             </Box>
           </CardContent>
         </Card>

@@ -13,7 +13,10 @@ import httpx
 from authlib.integrations.starlette_client import OAuth
 
 from app.db.database import get_db
-from app.db.models import User, UserRole, Company, UserCompany, UserCompanyRole
+from app.db.models import (
+    User, UserRole, Company, UserCompany, UserCompanyRole,
+    AccountType, SubscriptionPlan, Category, TransactionType, SavingsCategory
+)
 from app.core.config import settings
 
 # Dossier pour stocker les uploads
@@ -102,6 +105,60 @@ def generate_slug(name: str, db: Session) -> str:
     return slug
 
 
+def _seed_personal_defaults(db: Session, company_id: int):
+    """Créer les catégories par défaut pour un compte personnel."""
+    # Catégories de dépenses personnelles
+    expense_categories = [
+        {"name": "Logement", "color": "#3B82F6"},
+        {"name": "Alimentation", "color": "#10B981"},
+        {"name": "Transport", "color": "#F59E0B"},
+        {"name": "Loisirs", "color": "#8B5CF6"},
+        {"name": "Santé", "color": "#EF4444"},
+        {"name": "Éducation", "color": "#06B6D4"},
+        {"name": "Abonnements", "color": "#EC4899"},
+        {"name": "Divers", "color": "#6B7280"},
+    ]
+    for cat_data in expense_categories:
+        db.add(Category(
+            company_id=company_id,
+            name=cat_data["name"],
+            type=TransactionType.EXPENSE,
+            color=cat_data["color"],
+        ))
+
+    # Catégories de revenus personnels
+    income_categories = [
+        {"name": "Salaire", "color": "#10B981"},
+        {"name": "Freelance", "color": "#3B82F6"},
+        {"name": "Autres revenus", "color": "#F5C518"},
+    ]
+    for cat_data in income_categories:
+        db.add(Category(
+            company_id=company_id,
+            name=cat_data["name"],
+            type=TransactionType.REVENUE,
+            color=cat_data["color"],
+        ))
+
+    # Catégories d'épargne personnelles
+    savings = [
+        {"name": "Fonds d'urgence", "description": "Réserve pour les imprévus", "color": "#EF4444", "percentage": 40},
+        {"name": "Vacances", "description": "Budget voyages et vacances", "color": "#3B82F6", "percentage": 30},
+        {"name": "Projets", "description": "Projets personnels à financer", "color": "#8B5CF6", "percentage": 30},
+    ]
+    for sav_data in savings:
+        db.add(SavingsCategory(
+            company_id=company_id,
+            name=sav_data["name"],
+            description=sav_data["description"],
+            color=sav_data["color"],
+            percentage=sav_data["percentage"],
+            is_default=True,
+        ))
+
+    db.commit()
+
+
 @router.post("/register/company", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 async def register_company(data: RegisterRequest, db: Session = Depends(get_db)):
     """
@@ -135,10 +192,16 @@ async def register_company(data: RegisterRequest, db: Session = Depends(get_db))
             )
 
     try:
+        # Déterminer le type de compte
+        is_personal = (data.company.account_type == 'personal')
+        account_type_enum = AccountType.PERSONAL if is_personal else AccountType.BUSINESS
+        subscription_plan = SubscriptionPlan.PERSONAL if is_personal else SubscriptionPlan.BUSINESS
+
         # 1. Créer l'entreprise
-        slug = generate_slug(data.company.name, db)
+        company_name = data.company.name or data.full_name
+        slug = generate_slug(company_name, db)
         new_company = Company(
-            name=data.company.name,
+            name=company_name,
             slug=slug,
             email=data.company.email,
             phone=data.company.phone,
@@ -146,7 +209,9 @@ async def register_company(data: RegisterRequest, db: Session = Depends(get_db))
             city=data.company.city,
             postal_code=data.company.postal_code,
             country=data.company.country or "France",
-            vat_number=data.company.vat_number,
+            vat_number=data.company.vat_number if not is_personal else None,
+            account_type=account_type_enum,
+            subscription_plan=subscription_plan,
             is_active=True
         )
         db.add(new_company)
@@ -179,6 +244,10 @@ async def register_company(data: RegisterRequest, db: Session = Depends(get_db))
         db.commit()
         db.refresh(new_company)
         db.refresh(new_user)
+
+        # 5. Seeder les catégories par défaut pour les comptes personnels
+        if is_personal:
+            _seed_personal_defaults(db, new_company.id)
 
         # 4. Générer le token JWT pour connexion automatique
         access_token_expires = timedelta(minutes=settings.JWT_EXPIRES_MIN)

@@ -90,6 +90,7 @@ export default function ComptabilitePage() {
   const { user } = useAuthStore();
   const { currentCompany, fetchCurrentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -740,27 +741,29 @@ export default function ComptabilitePage() {
         </Box>
       </Box>
 
-      {/* Onglets Compte Entreprise / Compte Associé */}
-      <Tabs
-        value={activeAccountType}
-        onChange={(_, value) => setActiveAccountType(value)}
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab
-          value="company"
-          label="Compte Entreprise"
-          sx={{
-            '&.Mui-selected': { color: '#F5C518' },
-          }}
-        />
-        <Tab
-          value="associate"
-          label="Compte Associé"
-          sx={{
-            '&.Mui-selected': { color: '#F5C518' },
-          }}
-        />
-      </Tabs>
+      {/* Onglets Compte Entreprise / Compte Associé (pro seulement) */}
+      {!isPersonalAccount && (
+        <Tabs
+          value={activeAccountType}
+          onChange={(_, value) => setActiveAccountType(value)}
+          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab
+            value="company"
+            label="Compte Entreprise"
+            sx={{
+              '&.Mui-selected': { color: '#F5C518' },
+            }}
+          />
+          <Tab
+            value="associate"
+            label="Compte Associé"
+            sx={{
+              '&.Mui-selected': { color: '#F5C518' },
+            }}
+          />
+        </Tabs>
+      )}
 
       {/* Section Compte Associé avec explication et balance */}
       {activeAccountType === 'associate' && (

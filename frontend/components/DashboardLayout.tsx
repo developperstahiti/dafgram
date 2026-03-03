@@ -43,6 +43,16 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useAuthStore } from '@/store/authStore';
 import { useCompanyStore } from '@/store/companyStore';
 import { authAPI, companiesAPI } from '@/lib/api';
+import {
+  TextField,
+  DialogActions,
+} from '@mui/material';
+import {
+  Person as PersonIcon,
+  ContentCopy as CopyIcon,
+  Refresh as RefreshIcon,
+  Group as GroupIcon,
+} from '@mui/icons-material';
 import SubscriptionBanner from './SubscriptionBanner';
 
 // Icône personnalisée pour Transactions (flèches haut + bas)
@@ -64,6 +74,15 @@ export default function DashboardLayout({ children }: Props) {
   const { currentCompany, userCompanies, fetchCurrentCompany, fetchUserCompanies, switchCompany } = useCompanyStore();
   const { resolvedMode, toggleTheme } = useTheme();
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
+  const [createSpaceDialogOpen, setCreateSpaceDialogOpen] = useState(false);
+  const [joinCompanyDialogOpen, setJoinCompanyDialogOpen] = useState(false);
+  const [inviteCodeDialogOpen, setInviteCodeDialogOpen] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [joinCode, setJoinCode] = useState('');
+  const [newSpaceName, setNewSpaceName] = useState('');
+  const [newSpaceType, setNewSpaceType] = useState<'personal' | 'business'>('business');
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [dialogError, setDialogError] = useState<string | null>(null);
 
   // Refs pour l'upload d'images
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -168,23 +187,41 @@ export default function DashboardLayout({ children }: Props) {
     },
   ];
 
+  // Déterminer le type de compte
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
+
   // Configuration centralisée des items de navigation (source of truth pour les icônes)
-  const menuItems = [
-    { text: 'Tableau de bord', icon: <DashboardIcon sx={{ fontSize: 20 }} />, path: '/dashboard' },
-    { text: 'Transactions', icon: <TransactionsIcon />, path: '/dashboard/banque' },
-    {
-      text: 'Budget',
-      icon: <BudgetIcon sx={{ fontSize: 20 }} />,
-      path: '/dashboard/budget',
-      hasSubmenu: true,
-      submenu: [
-        { text: 'Charges', path: '/dashboard/budget/charges' },
-        { text: 'Épargne', path: '/dashboard/budget/epargne' },
-        { text: 'Temps', path: '/dashboard/budget/temps' },
+  const menuItems = isPersonalAccount
+    ? [
+        { text: 'Tableau de bord', icon: <DashboardIcon sx={{ fontSize: 20 }} />, path: '/dashboard' },
+        { text: 'Transactions', icon: <TransactionsIcon />, path: '/dashboard/banque' },
+        {
+          text: 'Budget',
+          icon: <BudgetIcon sx={{ fontSize: 20 }} />,
+          path: '/dashboard/budget',
+          hasSubmenu: true,
+          submenu: [
+            { text: 'Dépenses', path: '/dashboard/budget/charges' },
+            { text: 'Épargne', path: '/dashboard/budget/epargne' },
+          ]
+        },
       ]
-    },
-    { text: 'Ventes', icon: <SalesIcon sx={{ fontSize: 20 }} />, path: '/dashboard/ventes' },
-  ];
+    : [
+        { text: 'Tableau de bord', icon: <DashboardIcon sx={{ fontSize: 20 }} />, path: '/dashboard' },
+        { text: 'Transactions', icon: <TransactionsIcon />, path: '/dashboard/banque' },
+        {
+          text: 'Budget',
+          icon: <BudgetIcon sx={{ fontSize: 20 }} />,
+          path: '/dashboard/budget',
+          hasSubmenu: true,
+          submenu: [
+            { text: 'Charges', path: '/dashboard/budget/charges' },
+            { text: 'Épargne', path: '/dashboard/budget/epargne' },
+            { text: 'Temps', path: '/dashboard/budget/temps' },
+          ]
+        },
+        { text: 'Ventes', icon: <SalesIcon sx={{ fontSize: 20 }} />, path: '/dashboard/ventes' },
+      ];
 
   // Menu items cachés (pour référence future)
   // { text: 'Suivi', icon: <TimelineIcon />, path: '/dashboard/suivi' },
@@ -542,10 +579,14 @@ export default function DashboardLayout({ children }: Props) {
         </MenuItem>
       ))}
       <Divider sx={{ my: 0.5 }} />
+      {/* Créer un espace */}
       <MenuItem
         onClick={() => {
           handleCompanyMenuCloseImmediate();
-          setPricingDialogOpen(true);
+          setDialogError(null);
+          setNewSpaceName('');
+          setNewSpaceType(isPersonalAccount ? 'business' : 'personal');
+          setCreateSpaceDialogOpen(true);
         }}
         sx={{
           py: 1,
@@ -559,12 +600,122 @@ export default function DashboardLayout({ children }: Props) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <AddIcon sx={{ fontSize: 18 }} />
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
-            Ajouter une entreprise
+            {isPersonalAccount ? 'Créer un espace pro' : 'Créer un espace perso'}
           </Typography>
         </Box>
       </MenuItem>
+      {/* Rejoindre une entreprise */}
+      <MenuItem
+        onClick={() => {
+          handleCompanyMenuCloseImmediate();
+          setDialogError(null);
+          setJoinCode('');
+          setJoinCompanyDialogOpen(true);
+        }}
+        sx={{
+          py: 1,
+          px: 2,
+          color: resolvedMode === 'dark' ? '#B0B0B0' : '#6B7280',
+          '&:hover': {
+            bgcolor: resolvedMode === 'dark' ? 'rgba(245, 197, 24, 0.1)' : '#FEF9E7',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <GroupIcon sx={{ fontSize: 18 }} />
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            Rejoindre une entreprise
+          </Typography>
+        </Box>
+      </MenuItem>
+      {/* Code d'invitation (pro seulement) */}
+      {!isPersonalAccount && (
+        <MenuItem
+          onClick={async () => {
+            handleCompanyMenuCloseImmediate();
+            setDialogError(null);
+            try {
+              const res = await companiesAPI.getInviteCode();
+              setInviteCode(res.data.invite_code);
+            } catch {
+              setInviteCode('');
+            }
+            setInviteCodeDialogOpen(true);
+          }}
+          sx={{
+            py: 1,
+            px: 2,
+            color: resolvedMode === 'dark' ? '#B0B0B0' : '#6B7280',
+            '&:hover': {
+              bgcolor: resolvedMode === 'dark' ? 'rgba(245, 197, 24, 0.1)' : '#FEF9E7',
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CopyIcon sx={{ fontSize: 18 }} />
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Code d'invitation
+            </Typography>
+          </Box>
+        </MenuItem>
+      )}
     </Menu>
   );
+
+  // Handler: Créer un nouvel espace
+  const handleCreateSpace = async () => {
+    if (newSpaceType === 'business' && !newSpaceName.trim()) {
+      setDialogError("Le nom de l'entreprise est requis");
+      return;
+    }
+    setDialogLoading(true);
+    setDialogError(null);
+    try {
+      await companiesAPI.createSpace({
+        account_type: newSpaceType,
+        name: newSpaceType === 'personal' ? undefined : newSpaceName.trim(),
+      });
+      await fetchCurrentCompany();
+      await fetchUserCompanies();
+      setCreateSpaceDialogOpen(false);
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      setDialogError(err.response?.data?.detail || "Erreur lors de la création");
+    } finally {
+      setDialogLoading(false);
+    }
+  };
+
+  // Handler: Rejoindre une entreprise
+  const handleJoinCompany = async () => {
+    if (!joinCode.trim()) {
+      setDialogError("Le code d'invitation est requis");
+      return;
+    }
+    setDialogLoading(true);
+    setDialogError(null);
+    try {
+      await companiesAPI.joinCompany(joinCode.trim());
+      await fetchCurrentCompany();
+      await fetchUserCompanies();
+      setJoinCompanyDialogOpen(false);
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      setDialogError(err.response?.data?.detail || "Code d'invitation invalide");
+    } finally {
+      setDialogLoading(false);
+    }
+  };
+
+  // Handler: Régénérer le code d'invitation
+  const handleRegenerateCode = async () => {
+    try {
+      const res = await companiesAPI.regenerateInviteCode();
+      setInviteCode(res.data.invite_code);
+    } catch {
+      setDialogError("Erreur lors de la régénération");
+    }
+  };
 
   if (!isAuthenticated) {
     return null;
@@ -573,6 +724,139 @@ export default function DashboardLayout({ children }: Props) {
   return (
     <Box sx={{ bgcolor: resolvedMode === 'dark' ? '#0F0F0F' : '#F5F5F7', minHeight: '100vh' }}>
       {fileInputs}
+
+      {/* Dialog: Créer un espace */}
+      <Dialog
+        open={createSpaceDialogOpen}
+        onClose={() => setCreateSpaceDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {newSpaceType === 'personal' ? 'Créer un espace personnel' : 'Créer un espace professionnel'}
+        </DialogTitle>
+        <DialogContent>
+          {dialogError && (
+            <Typography variant="body2" color="error" sx={{ mb: 2 }}>{dialogError}</Typography>
+          )}
+          {newSpaceType === 'business' ? (
+            <TextField
+              fullWidth
+              label="Nom de l'entreprise"
+              value={newSpaceName}
+              onChange={(e) => setNewSpaceName(e.target.value)}
+              sx={{ mt: 1 }}
+              autoFocus
+            />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Un espace personnel sera créé avec vos catégories de budget par défaut (Logement, Alimentation, Transport, etc.)
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setCreateSpaceDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateSpace}
+            disabled={dialogLoading}
+            sx={{ bgcolor: '#F5C518', color: '#1A1A1A', '&:hover': { bgcolor: '#E0B000' } }}
+          >
+            {dialogLoading ? 'Création...' : 'Créer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog: Rejoindre une entreprise */}
+      <Dialog
+        open={joinCompanyDialogOpen}
+        onClose={() => setJoinCompanyDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Rejoindre une entreprise</DialogTitle>
+        <DialogContent>
+          {dialogError && (
+            <Typography variant="body2" color="error" sx={{ mb: 2 }}>{dialogError}</Typography>
+          )}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Entrez le code d'invitation fourni par l'administrateur de l'entreprise
+          </Typography>
+          <TextField
+            fullWidth
+            label="Code d'invitation"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+            placeholder="XXXXXXXX"
+            inputProps={{ maxLength: 8, style: { letterSpacing: 4, fontWeight: 600, textAlign: 'center', fontSize: '1.2rem' } }}
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setJoinCompanyDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            onClick={handleJoinCompany}
+            disabled={dialogLoading || joinCode.length < 4}
+            sx={{ bgcolor: '#F5C518', color: '#1A1A1A', '&:hover': { bgcolor: '#E0B000' } }}
+          >
+            {dialogLoading ? 'Connexion...' : 'Rejoindre'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog: Code d'invitation */}
+      <Dialog
+        open={inviteCodeDialogOpen}
+        onClose={() => setInviteCodeDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>Code d'invitation</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Partagez ce code avec les personnes que vous souhaitez inviter dans votre entreprise
+          </Typography>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            p: 2,
+            bgcolor: resolvedMode === 'dark' ? '#1A1A1A' : '#F9FAFB',
+            borderRadius: 2,
+            border: '2px dashed',
+            borderColor: '#F5C518',
+            justifyContent: 'center',
+          }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 6, color: '#F5C518' }}>
+              {inviteCode || '...'}
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'center' }}>
+            <Button
+              size="small"
+              startIcon={<CopyIcon />}
+              onClick={() => {
+                navigator.clipboard.writeText(inviteCode);
+              }}
+              sx={{ color: '#6B7280' }}
+            >
+              Copier
+            </Button>
+            <Button
+              size="small"
+              startIcon={<RefreshIcon />}
+              onClick={handleRegenerateCode}
+              sx={{ color: '#6B7280' }}
+            >
+              Régénérer
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setInviteCodeDialogOpen(false)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Top Bar */}
       <AppBar
@@ -855,7 +1139,7 @@ export default function DashboardLayout({ children }: Props) {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {currentCompany?.name || 'Entreprise'}
+                    {isPersonalAccount ? 'Mon budget' : (currentCompany?.name || 'Entreprise')}
                   </Typography>
                   <KeyboardArrowDown
                     sx={{

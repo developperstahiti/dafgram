@@ -9,13 +9,13 @@ from pydantic import BaseModel
 from datetime import datetime
 
 from app.db.database import get_db
-from app.db.models import User, SavingsCategory, Transaction, TransactionType
+from app.db.models import User, SavingsCategory, Transaction, TransactionType, Company, AccountType
 from app.core.security import get_current_active_user
 
 router = APIRouter(tags=["savings-categories"])
 
 
-# Catégories d'épargne par défaut
+# Catégories d'épargne par défaut (professionnel)
 DEFAULT_SAVINGS_CATEGORIES = [
     {
         "name": "Budget Croissance",
@@ -36,6 +36,31 @@ DEFAULT_SAVINGS_CATEGORIES = [
         "description": "Former les entrepreneurs de l'entreprise ou le personnel : formations professionnelles, certifications, coaching, conférences.",
         "color": "#8B5CF6",  # Violet
         "percentage": 25,
+        "is_default": True
+    }
+]
+
+# Catégories d'épargne par défaut (personnel)
+DEFAULT_PERSONAL_SAVINGS_CATEGORIES = [
+    {
+        "name": "Fonds d'urgence",
+        "description": "Réserve financière pour les situations imprévues : réparations, santé, perte de revenus.",
+        "color": "#EF4444",
+        "percentage": 40,
+        "is_default": True
+    },
+    {
+        "name": "Vacances",
+        "description": "Épargne pour les voyages, vacances et loisirs.",
+        "color": "#3B82F6",
+        "percentage": 30,
+        "is_default": True
+    },
+    {
+        "name": "Projets personnels",
+        "description": "Financer un projet personnel : déménagement, achat important, formation.",
+        "color": "#8B5CF6",
+        "percentage": 30,
         "is_default": True
     }
 ]
@@ -320,8 +345,13 @@ async def seed_default_categories(
             detail="Des catégories d'épargne existent déjà. Supprimez-les d'abord pour réinitialiser."
         )
 
+    # Choisir les catégories par défaut selon le type de compte
+    company = db.query(Company).filter(Company.id == company_id).first()
+    is_personal = company and company.account_type == AccountType.PERSONAL
+    defaults = DEFAULT_PERSONAL_SAVINGS_CATEGORIES if is_personal else DEFAULT_SAVINGS_CATEGORIES
+
     created = []
-    for cat_data in DEFAULT_SAVINGS_CATEGORIES:
+    for cat_data in defaults:
         cat = SavingsCategory(
             company_id=company_id,
             name=cat_data["name"],

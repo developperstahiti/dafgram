@@ -58,6 +58,7 @@ class CompanyCreate(BaseModel):
     postal_code: Optional[str] = None
     country: Optional[str] = "France"
     vat_number: Optional[str] = None
+    account_type: Optional[str] = "business"
 
 
 class RegisterRequest(BaseModel):

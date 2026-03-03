@@ -31,6 +31,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { transactionsAPI, Transaction } from '@/lib/api';
+import { useCompanyStore } from '@/store/companyStore';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -41,6 +42,8 @@ const MONTH_NAMES = [
 
 export default function DashboardPage() {
   const theme = useTheme();
+  const { currentCompany } = useCompanyStore();
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
 
   // État pour la navigation par mois
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
@@ -204,27 +207,29 @@ export default function DashboardPage() {
       <Grid container spacing={2} sx={{ mt: 2 }}>
         {/* Colonne gauche: Camemberts + Alertes */}
         <Grid item xs={12} lg={9}>
-          {/* Sous-grille pour les 3 camemberts */}
+          {/* Sous-grille pour les camemberts */}
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={isPersonalAccount ? 6 : 4}>
               <BudgetPieCharts
                 currentDate={currentDate}
                 hideUnallocated={hideUnallocated}
                 renderMode="pie-only"
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={isPersonalAccount ? 6 : 4}>
               <SavingsPieCharts
                 currentDate={currentDate}
                 renderMode="pie-only"
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <TimePieCharts
-                currentDate={currentDate}
-                renderMode="pie-only"
-              />
-            </Grid>
+            {!isPersonalAccount && (
+              <Grid item xs={12} sm={4}>
+                <TimePieCharts
+                  currentDate={currentDate}
+                  renderMode="pie-only"
+                />
+              </Grid>
+            )}
           </Grid>
           {/* Alertes budgétaires sous les camemberts */}
           <Box sx={{ mt: 2 }}>
@@ -346,44 +351,46 @@ export default function DashboardPage() {
       {/* Revenue Chart with Events */}
       <RevenueChart currentDate={currentDate} adminMode={adminMode} />
 
-      {/* Encart Comptabilité - À venir */}
-      <Card
-        sx={{
-          mt: 2,
-          borderRadius: 2,
-          bgcolor: theme.palette.background.paper,
-          border: `1px dashed ${alpha(theme.palette.text.disabled, 0.3)}`,
-        }}
-      >
-        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                bgcolor: alpha(theme.palette.text.disabled, 0.1),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <BuildIcon sx={{ color: theme.palette.text.disabled, fontSize: 22 }} />
+      {/* Encart Comptabilité - À venir (pro seulement) */}
+      {!isPersonalAccount && (
+        <Card
+          sx={{
+            mt: 2,
+            borderRadius: 2,
+            bgcolor: theme.palette.background.paper,
+            border: `1px dashed ${alpha(theme.palette.text.disabled, 0.3)}`,
+          }}
+        >
+          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.text.disabled, 0.1),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <BuildIcon sx={{ color: theme.palette.text.disabled, fontSize: 22 }} />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
+                  Envoi Comptabilité
+                </Typography>
+                <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                  Envoi automatique des rapports mensuels à votre comptable, suivi des retours et validation - Disponible dans une prochaine mise à jour
+                </Typography>
+              </Box>
             </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
-                Envoi Comptabilité
-              </Typography>
-              <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
-                Envoi automatique des rapports mensuels à votre comptable, suivi des retours et validation - Disponible dans une prochaine mise à jour
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Suivi Vendeur */}
-      <SalesTracker adminMode={adminMode} />
+      {/* Suivi Vendeur (pro seulement) */}
+      {!isPersonalAccount && <SalesTracker adminMode={adminMode} />}
     </DashboardLayout>
   );
 }

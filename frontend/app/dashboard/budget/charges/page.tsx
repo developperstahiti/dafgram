@@ -57,6 +57,7 @@ export default function ChargesPage() {
   const theme = useTheme();
   const { currentCompany, fetchCurrentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
 
   // Navigation par mois
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth() + 1);
@@ -363,10 +364,12 @@ export default function ChargesPage() {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
-          Charges
+          {isPersonalAccount ? 'Dépenses' : 'Charges'}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Gérez vos charges et suivez les dépenses de celles-ci
+          {isPersonalAccount
+            ? 'Gérez votre budget et suivez vos dépenses'
+            : 'Gérez vos charges et suivez les dépenses de celles-ci'}
         </Typography>
       </Box>
 

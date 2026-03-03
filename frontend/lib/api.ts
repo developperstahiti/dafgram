@@ -260,6 +260,7 @@ export interface CompanyInfo {
   currency?: string;
   language?: string;
   logo_url?: string;
+  account_type?: 'personal' | 'business';
   is_active: boolean;
   name_changed?: boolean;
 }
@@ -300,6 +301,18 @@ export const companiesAPI = {
     return api.post<CompanyInfo>('/api/companies/me/company/logo', formData);
   },
   deleteLogo: () => api.delete<CompanyInfo>('/api/companies/me/company/logo'),
+
+  // Code d'invitation
+  getInviteCode: () => api.get<{ invite_code: string }>('/api/companies/me/company/invite-code'),
+  regenerateInviteCode: () => api.post<{ invite_code: string }>('/api/companies/me/company/invite-code/regenerate'),
+
+  // Rejoindre une entreprise
+  joinCompany: (inviteCode: string) =>
+    api.post<{ message: string; company_id: number; company_name: string }>('/api/companies/me/join-company', { invite_code: inviteCode }),
+
+  // Créer un nouvel espace
+  createSpace: (data: { account_type: string; name?: string; email?: string; phone?: string }) =>
+    api.post<CompanyInfo>('/api/companies/me/create-space', data),
 };
 
 // ============== Company Settings (Comptabilité) ==============

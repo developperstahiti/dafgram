@@ -248,9 +248,7 @@ export default function LoginPage() {
       }
       setActiveStep(3);
     } else if (activeStep === 3) {
-      if (accountType === 'business') {
-        handleRegister();
-      }
+      handleRegister();
     }
   };
 
@@ -277,16 +275,27 @@ export default function LoginPage() {
     setRegisterError(null);
 
     try {
-      const companyPayload = {
-        name: companyData.name,
-        email: companyData.contact_email || personalData.email,
-        phone: companyData.contact_phone || personalData.phone,
-        legal_form: companyData.legal_form,
-        year_created: companyData.year_created,
-        expertise_domain: companyData.expertise_domain,
-        contact_name: `${companyData.contact_first_name} ${companyData.contact_last_name}`,
-        account_type: 'business',
-      };
+      let companyPayload;
+
+      if (accountType === 'personal') {
+        companyPayload = {
+          name: `${personalData.first_name} ${personalData.last_name}`,
+          email: personalData.email,
+          phone: personalData.phone,
+          account_type: 'personal',
+        };
+      } else {
+        companyPayload = {
+          name: companyData.name,
+          email: companyData.contact_email || personalData.email,
+          phone: companyData.contact_phone || personalData.phone,
+          legal_form: companyData.legal_form,
+          year_created: companyData.year_created,
+          expertise_domain: companyData.expertise_domain,
+          contact_name: `${companyData.contact_first_name} ${companyData.contact_last_name}`,
+          account_type: 'business',
+        };
+      }
 
       const response = await authAPI.registerCompany({
         company: companyPayload,
@@ -650,49 +659,75 @@ export default function LoginPage() {
     if (activeStep === 3) {
       if (accountType === 'personal') {
         return (
-          <Box sx={{ textAlign: 'center', py: 2 }}>
-            <Box
-              sx={{
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                bgcolor: '#FEF3C7',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mx: 'auto',
-                mb: 2,
-              }}
-            >
-              <ConstructionIcon sx={{ fontSize: 40, color: '#F59E0B' }} />
-            </Box>
-
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-              En cours de développement
+          <Box>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, textAlign: 'center' }}>
+              Finalisez votre inscription
             </Typography>
 
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              L'offre personnelle sera bientôt disponible.
-              Nous vous contacterons dès que possible !
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
+              Créez votre mot de passe pour accéder à votre espace personnel
             </Typography>
 
-            <Box sx={{ bgcolor: '#F9FAFB', borderRadius: 2, p: 2, mb: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                Vos besoins :
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  type="password"
+                  label="Mot de passe"
+                  value={userData.password}
+                  onChange={(e) => setUserData({ ...userData, password: e.target.value })}
+                  required
+                  size="small"
+                  helperText="Min. 6 caractères"
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  type="password"
+                  label="Confirmer"
+                  value={userData.confirmPassword}
+                  onChange={(e) => setUserData({ ...userData, confirmPassword: e.target.value })}
+                  required
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ bgcolor: '#F9FAFB', borderRadius: 2, p: 2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                Récapitulatif
               </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1, justifyContent: 'center' }}>
-                {selectedNeeds.map(needId => {
-                  const need = personalNeeds.find(n => n.id === needId);
-                  return need ? (
-                    <Chip key={needId} label={need.label} size="small" sx={{ bgcolor: '#F5C51820', fontSize: '0.7rem' }} />
-                  ) : null;
-                })}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                <Typography variant="caption" color="text.secondary">Compte</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>Personnel</Typography>
               </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">Utilisateur</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {personalData.first_name} {personalData.last_name}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="caption" color="text.secondary">Email</Typography>
+                <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                  {personalData.email}
+                </Typography>
+              </Box>
+              {selectedNeeds.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Besoins :</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                    {selectedNeeds.map(needId => {
+                      const need = personalNeeds.find(n => n.id === needId);
+                      return need ? (
+                        <Chip key={needId} label={need.label} size="small" sx={{ bgcolor: '#F5C51820', fontSize: '0.7rem' }} />
+                      ) : null;
+                    })}
+                  </Box>
+                </Box>
+              )}
             </Box>
-
-            <Typography variant="caption" color="text.secondary">
-              Contact : contact@dafgram.com
-            </Typography>
           </Box>
         );
       }
@@ -1009,38 +1044,26 @@ export default function LoginPage() {
               </Button>
             )}
 
-            {!(activeStep === 3 && accountType === 'personal') && (
-              <Button
-                onClick={handleNext}
-                variant="contained"
-                disabled={isLoading}
-                sx={{
-                  flex: 1,
-                  bgcolor: '#F5C518',
-                  color: '#1A1A1A',
-                  fontWeight: 600,
-                  '&:hover': { bgcolor: '#E0B000' },
-                }}
-              >
-                {isLoading ? (
-                  <CircularProgress size={24} sx={{ color: '#1A1A1A' }} />
-                ) : activeStep === 3 && accountType === 'business' ? (
-                  'Créer mon compte'
-                ) : (
-                  'Continuer'
-                )}
-              </Button>
-            )}
-
-            {activeStep === 3 && accountType === 'personal' && (
-              <Button
-                onClick={closeRegisterDialog}
-                variant="outlined"
-                sx={{ flex: 1, borderColor: '#F5C518', color: '#F5C518' }}
-              >
-                Fermer
-              </Button>
-            )}
+            <Button
+              onClick={handleNext}
+              variant="contained"
+              disabled={isLoading}
+              sx={{
+                flex: 1,
+                bgcolor: '#F5C518',
+                color: '#1A1A1A',
+                fontWeight: 600,
+                '&:hover': { bgcolor: '#E0B000' },
+              }}
+            >
+              {isLoading ? (
+                <CircularProgress size={24} sx={{ color: '#1A1A1A' }} />
+              ) : activeStep === 3 ? (
+                'Créer mon compte'
+              ) : (
+                'Continuer'
+              )}
+            </Button>
           </Box>
         </DialogContent>
       </Dialog>

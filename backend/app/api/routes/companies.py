@@ -4,6 +4,8 @@ Routes pour la gestion des entreprises utilisateur
 import os
 import uuid
 import shutil
+import secrets
+import string
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
@@ -11,7 +13,10 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 
 from app.db.database import get_db
-from app.db.models import User, Company, UserCompany, UserCompanyRole, CompanySettings, BankAccount
+from app.db.models import (
+    User, Company, UserCompany, UserCompanyRole, CompanySettings, BankAccount,
+    AccountType, SubscriptionPlan, UserRole
+)
 from app.core.security import get_current_active_user
 from app.core.config import settings
 from app.schemas.company import (
@@ -44,6 +49,7 @@ class CompanyResponse(BaseModel):
     currency: Optional[str] = "EUR"
     language: Optional[str] = "fr"
     logo_url: Optional[str] = None
+    account_type: Optional[str] = None
     is_active: bool
     name_changed: bool = False
 
@@ -470,6 +476,207 @@ async def delete_settings_logo(
         db.refresh(settings)
 
     return CompanySettingsResponse.from_orm_with_smtp_status(settings) if settings else None
+
+
+# ============ Code d'invitation & Espaces ============
+
+def _generate_invite_code() -> str:
+    """Générer un code d'invitation unique de 8 caractères"""
+    chars = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(8))
+
+
+class InviteCodeResponse(BaseModel):
+    invite_code: str
+
+
+class JoinCompanyRequest(BaseModel):
+    invite_code: str
+
+
+class CreateSpaceRequest(BaseModel):
+    """Créer un nouvel espace (personnel ou professionnel)"""
+    account_type: str  # "personal" ou "business"
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+
+@router.get("/me/company/invite-code", response_model=InviteCodeResponse)
+async def get_invite_code(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Récupérer ou générer le code d'invitation de l'entreprise courante"""
+    company_id = current_user.current_company_id or current_user.company_id
+
+    # Vérifier les droits admin
+    user_company = db.query(UserCompany).filter(
+        UserCompany.user_id == current_user.id,
+        UserCompany.company_id == company_id
+    ).first()
+
+    if user_company and user_company.role not in [UserCompanyRole.OWNER, UserCompanyRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les administrateurs peuvent voir le code d'invitation"
+        )
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée")
+
+    # Générer le code s'il n'existe pas
+    if not company.invite_code:
+        company.invite_code = _generate_invite_code()
+        # S'assurer de l'unicité
+        while db.query(Company).filter(Company.invite_code == company.invite_code, Company.id != company.id).first():
+            company.invite_code = _generate_invite_code()
+        db.commit()
+
+    return InviteCodeResponse(invite_code=company.invite_code)
+
+
+@router.post("/me/company/invite-code/regenerate", response_model=InviteCodeResponse)
+async def regenerate_invite_code(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Régénérer le code d'invitation de l'entreprise courante"""
+    company_id = current_user.current_company_id or current_user.company_id
+
+    user_company = db.query(UserCompany).filter(
+        UserCompany.user_id == current_user.id,
+        UserCompany.company_id == company_id
+    ).first()
+
+    if user_company and user_company.role not in [UserCompanyRole.OWNER, UserCompanyRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seuls les administrateurs peuvent régénérer le code d'invitation"
+        )
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if not company:
+        raise HTTPException(status_code=404, detail="Entreprise non trouvée")
+
+    company.invite_code = _generate_invite_code()
+    while db.query(Company).filter(Company.invite_code == company.invite_code, Company.id != company.id).first():
+        company.invite_code = _generate_invite_code()
+    db.commit()
+
+    return InviteCodeResponse(invite_code=company.invite_code)
+
+
+@router.post("/me/join-company")
+async def join_company(
+    request: JoinCompanyRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Rejoindre une entreprise via un code d'invitation"""
+    # Trouver l'entreprise par code d'invitation
+    company = db.query(Company).filter(
+        Company.invite_code == request.invite_code.upper(),
+        Company.is_active == True
+    ).first()
+
+    if not company:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Code d'invitation invalide"
+        )
+
+    # Vérifier que l'utilisateur n'est pas déjà membre
+    existing = db.query(UserCompany).filter(
+        UserCompany.user_id == current_user.id,
+        UserCompany.company_id == company.id
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous êtes déjà membre de cette entreprise"
+        )
+
+    # Ajouter l'utilisateur comme MEMBER
+    user_company = UserCompany(
+        user_id=current_user.id,
+        company_id=company.id,
+        role=UserCompanyRole.MEMBER,
+        is_default=False
+    )
+    db.add(user_company)
+
+    # Changer l'entreprise courante
+    current_user.current_company_id = company.id
+    db.commit()
+
+    return {
+        "message": f"Vous avez rejoint {company.name} !",
+        "company_id": company.id,
+        "company_name": company.name
+    }
+
+
+@router.post("/me/create-space", response_model=CompanyResponse)
+async def create_space(
+    data: CreateSpaceRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Créer un nouvel espace (personnel ou professionnel) depuis un compte existant"""
+    is_personal = (data.account_type == 'personal')
+    account_type_enum = AccountType.PERSONAL if is_personal else AccountType.BUSINESS
+    subscription_plan = SubscriptionPlan.PERSONAL if is_personal else SubscriptionPlan.BUSINESS
+
+    # Nom de l'espace
+    space_name = data.name or current_user.full_name
+    if not space_name:
+        raise HTTPException(status_code=400, detail="Le nom est requis")
+
+    # Générer le slug
+    import re
+    base_slug = re.sub(r'[^a-z0-9]+', '-', space_name.lower()).strip('-')
+    slug = base_slug
+    counter = 1
+    while db.query(Company).filter(Company.slug == slug).first():
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    # Créer l'entreprise/espace
+    new_company = Company(
+        name=space_name,
+        slug=slug,
+        email=data.email or current_user.email,
+        phone=data.phone,
+        account_type=account_type_enum,
+        subscription_plan=subscription_plan,
+        is_active=True
+    )
+    db.add(new_company)
+    db.flush()
+
+    # Lier l'utilisateur comme OWNER
+    user_company = UserCompany(
+        user_id=current_user.id,
+        company_id=new_company.id,
+        role=UserCompanyRole.OWNER,
+        is_default=False
+    )
+    db.add(user_company)
+
+    # Changer l'entreprise courante
+    current_user.current_company_id = new_company.id
+    db.commit()
+    db.refresh(new_company)
+
+    # Seeder les catégories par défaut pour les comptes personnels
+    if is_personal:
+        from app.api.routes.auth import _seed_personal_defaults
+        _seed_personal_defaults(db, new_company.id)
+
+    return new_company
 
 
 # ============ Bank Accounts (RIB) ============
