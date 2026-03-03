@@ -6,8 +6,8 @@ let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || (
     : 'http://localhost:8000'
 );
 
-// Forcer HTTPS en production pour éviter les erreurs Mixed Content
-if (typeof window !== 'undefined' && window.location.protocol === 'https:' && API_BASE_URL.startsWith('http://')) {
+// Forcer HTTPS pour les domaines de production (fonctionne côté SSR et client)
+if (API_BASE_URL.includes('dafgram.com')) {
   API_BASE_URL = API_BASE_URL.replace('http://', 'https://');
 }
 
