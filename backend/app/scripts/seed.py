@@ -279,17 +279,28 @@ def migrate_personal_accounts():
                 ))
                 changed = True
 
-            # 3. Vérifier/créer les catégories d'épargne
+            # 3. Remplacer les anciennes catégories d'épargne par les nouvelles
+            target_savings = [
+                ("Trading long terme", "Investissements et trading long terme", "#F59E0B", 50),
+                ("Trading moyen terme", "Trading et investissements moyen terme", "#10B981", 30),
+                ("Projet perso", "Projets personnels à financer", "#8B5CF6", 20),
+            ]
+            target_names = {s[0] for s in target_savings}
             existing_savings = db.query(SavingsCategory).filter(
                 SavingsCategory.company_id == cid,
-            ).count()
+            ).all()
+            existing_names = {s.name for s in existing_savings}
 
-            if existing_savings == 0:
-                for name, desc, color, pct in [
-                    ("Trading long terme", "Investissements et trading long terme", "#F59E0B", 50),
-                    ("Trading moyen terme", "Trading et investissements moyen terme", "#10B981", 30),
-                    ("Projet perso", "Projets personnels à financer", "#8B5CF6", 20),
-                ]:
+            # Supprimer les anciennes catégories qui ne font pas partie des nouvelles
+            old_names = {"Fonds d'urgence", "Vacances", "Projets", "Projets personnels"}
+            for sav in existing_savings:
+                if sav.name in old_names and sav.name not in target_names:
+                    db.delete(sav)
+                    changed = True
+
+            # Créer les nouvelles catégories manquantes
+            for name, desc, color, pct in target_savings:
+                if name not in existing_names:
                     db.add(SavingsCategory(
                         company_id=cid,
                         name=name,
@@ -298,7 +309,7 @@ def migrate_personal_accounts():
                         percentage=pct,
                         is_default=True,
                     ))
-                changed = True
+                    changed = True
 
             if changed:
                 print(f"  Migrated personal account: {company.name} (id={cid})")
