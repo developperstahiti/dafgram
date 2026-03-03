@@ -133,7 +133,7 @@ export default function SettingsPage() {
     try {
       await updateCompany({ name: companyName });
       await fetchCurrentCompany();
-      setSuccess('Nom de l\'entreprise mis à jour avec succès');
+      setSuccess('Nom mis à jour avec succès');
       setIsEditingName(false);
     } catch (err: any) {
       const errorDetail = err.response?.data?.detail;
@@ -205,6 +205,7 @@ export default function SettingsPage() {
   }
 
   const canEditName = !currentCompany?.name_changed;
+  const isPersonalAccount = currentCompany?.account_type === 'personal';
 
   return (
     <DashboardLayout>
@@ -223,7 +224,7 @@ export default function SettingsPage() {
           Paramètres
         </Typography>
         <Typography variant="body2" sx={{ color: '#9CA3AF' }}>
-          Gérez les informations de votre entreprise et vos préférences
+          {isPersonalAccount ? 'Gérez vos préférences personnelles' : 'Gérez les informations de votre entreprise et vos préférences'}
         </Typography>
       </Box>
 
@@ -246,7 +247,7 @@ export default function SettingsPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <Business sx={{ color: '#F5C518', fontSize: 20 }} />
               <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                Identité de l'entreprise
+                {isPersonalAccount ? 'Mon profil' : 'Identité de l\'entreprise'}
               </Typography>
             </Box>
 
@@ -299,7 +300,7 @@ export default function SettingsPage() {
               {/* Nom de l'entreprise */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="subtitle2" sx={{ color: '#9CA3AF', mb: 1 }}>
-                  Nom de l'entreprise
+                  {isPersonalAccount ? 'Nom de l\'espace' : 'Nom de l\'entreprise'}
                 </Typography>
 
                 {isEditingName ? (
@@ -347,7 +348,7 @@ export default function SettingsPage() {
                 ) : (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Typography variant="h5" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                      {currentCompany?.name || 'Mon entreprise'}
+                      {currentCompany?.name || (isPersonalAccount ? 'Mon espace' : 'Mon entreprise')}
                     </Typography>
                     {canEditName ? (
                       <IconButton
@@ -385,47 +386,49 @@ export default function SettingsPage() {
           </Paper>
         </Grid>
 
-        {/* Informations légales (lecture seule) */}
-        <Grid item xs={12} md={6}>
-          <Paper elevation={0} sx={{ p: 3, borderRadius: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Lock sx={{ color: '#9CA3AF', fontSize: 20 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                Informations légales
+        {/* Informations légales (lecture seule) - pro seulement */}
+        {!isPersonalAccount && (
+          <Grid item xs={12} md={6}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+                <Lock sx={{ color: '#9CA3AF', fontSize: 20 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  Informations légales
+                </Typography>
+                <Chip
+                  label="Non modifiable"
+                  size="small"
+                  sx={{ ml: 'auto', bgcolor: '#F3F4F6', color: '#6B7280', fontSize: '0.7rem' }}
+                />
+              </Box>
+              <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
+                Ces informations ne peuvent pas être modifiées directement. Contactez le support si nécessaire.
               </Typography>
-              <Chip
-                label="Non modifiable"
-                size="small"
-                sx={{ ml: 'auto', bgcolor: '#F3F4F6', color: '#6B7280', fontSize: '0.7rem' }}
-              />
-            </Box>
-            <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
-              Ces informations ne peuvent pas être modifiées directement. Contactez le support si nécessaire.
-            </Typography>
 
-            <TextField
-              fullWidth
-              label="Numéro de TVA"
-              value={currentCompany?.vat_number || 'Non renseigné'}
-              disabled
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Receipt sx={{ color: '#9CA3AF' }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiInputBase-input.Mui-disabled': {
-                  WebkitTextFillColor: '#6B7280',
-                },
-              }}
-            />
-          </Paper>
-        </Grid>
+              <TextField
+                fullWidth
+                label="Numéro de TVA"
+                value={currentCompany?.vat_number || 'Non renseigné'}
+                disabled
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Receipt sx={{ color: '#9CA3AF' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiInputBase-input.Mui-disabled': {
+                    WebkitTextFillColor: '#6B7280',
+                  },
+                }}
+              />
+            </Paper>
+          </Grid>
+        )}
 
         {/* Préférences */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={isPersonalAccount ? 12 : 6}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <Language sx={{ color: '#F5C518', fontSize: 20 }} />
@@ -498,7 +501,7 @@ export default function SettingsPage() {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 3, borderRadius: 4 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-              Informations de contact
+              {isPersonalAccount ? 'Mes coordonnées' : 'Informations de contact'}
             </Typography>
             <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
               Ces informations peuvent être mises à jour à tout moment.
@@ -512,7 +515,7 @@ export default function SettingsPage() {
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange('email')}
-                  placeholder="contact@entreprise.fr"
+                  placeholder={isPersonalAccount ? 'mon@email.fr' : 'contact@entreprise.fr'}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -623,7 +626,9 @@ export default function SettingsPage() {
             </Box>
 
             <Typography variant="body2" sx={{ color: '#9CA3AF', mb: 3 }}>
-              La suppression de cet espace est irréversible. Toutes les données associées (transactions, budgets, documents, employés) seront définitivement supprimées.
+              {isPersonalAccount
+                ? 'La suppression de votre espace personnel est irréversible. Toutes vos données (transactions, budgets, épargne) seront définitivement supprimées.'
+                : 'La suppression de cet espace est irréversible. Toutes les données associées (transactions, budgets, documents, employés) seront définitivement supprimées.'}
             </Typography>
 
             <Button
