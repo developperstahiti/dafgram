@@ -334,7 +334,7 @@ export default function ChargesPage() {
       // Créer les sous-catégories pour les comptes personnels
       if (isPersonalAccount) {
         // Récupérer les catégories fraîchement créées pour avoir les IDs
-        const freshCategories = await bankAPI.getCategories();
+        const { data: freshCategories } = await bankAPI.getCategories();
         for (const [parentName, children] of Object.entries(personalSubcategories)) {
           const parent = freshCategories.find(
             (c: Category) => c.name === parentName && c.type === 'expense' && !c.parent_id
