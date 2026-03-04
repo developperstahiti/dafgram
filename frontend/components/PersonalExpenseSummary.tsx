@@ -42,24 +42,36 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
     [currency]
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [budgetRes, savingsRes] = await Promise.all([
-          budgetCategoriesAPI.getSummary(month, year),
-          savingsCategoriesAPI.getSummary(month, year),
-        ]);
-        setSummary(budgetRes.data);
-        setSavingsSummary(savingsRes.data);
-      } catch (err) {
-        console.error('Error fetching personal summary:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [budgetRes, savingsRes] = await Promise.all([
+        budgetCategoriesAPI.getSummary(month, year),
+        savingsCategoriesAPI.getSummary(month, year),
+      ]);
+      setSummary(budgetRes.data);
+      setSavingsSummary(savingsRes.data);
+    } catch (err) {
+      console.error('Error fetching personal summary:', err);
+    } finally {
+      setLoading(false);
+    }
   }, [month, year]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Écouter les événements de rafraîchissement
+  useEffect(() => {
+    const handleRefresh = () => fetchData();
+    window.addEventListener('refresh-budget-data', handleRefresh);
+    window.addEventListener('refresh-savings-data', handleRefresh);
+    return () => {
+      window.removeEventListener('refresh-budget-data', handleRefresh);
+      window.removeEventListener('refresh-savings-data', handleRefresh);
+    };
+  }, [fetchData]);
 
   if (loading) {
     return (

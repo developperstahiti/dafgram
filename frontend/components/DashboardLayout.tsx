@@ -70,7 +70,7 @@ interface Props {
 export default function DashboardLayout({ children }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, fetchUser, isAuthenticated } = useAuthStore();
+  const { user, logout, fetchUser, isAuthenticated, isLoading } = useAuthStore();
   const { currentCompany, userCompanies, fetchCurrentCompany, fetchUserCompanies, switchCompany } = useCompanyStore();
   const { resolvedMode, toggleTheme } = useTheme();
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
@@ -121,10 +121,10 @@ export default function DashboardLayout({ children }: Props) {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   const handleLogout = () => {
     logout();

@@ -2445,6 +2445,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                           setPersonalTxDesc('');
                           setPersonalTxSuccess(true);
                           await fetchData();
+                          window.dispatchEvent(new CustomEvent('refresh-budget-data'));
                           setTimeout(() => setPersonalTxSuccess(false), 3000);
                         } catch (err: any) {
                           setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
@@ -3130,6 +3131,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                         setPersonalTxDesc('');
                         setPersonalTxSuccess(true);
                         await fetchData();
+                        window.dispatchEvent(new CustomEvent('refresh-budget-data'));
                         setTimeout(() => setPersonalTxSuccess(false), 3000);
                       } catch (err: any) {
                         setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
@@ -3391,6 +3393,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                         setPersonalTxDesc('');
                         setPersonalTxSuccess(true);
                         await fetchData();
+                        window.dispatchEvent(new CustomEvent('refresh-budget-data'));
                         // Recharger les transactions du dialog
                         if (selectedCategoryData) {
                           await handleDrillDown(selectedCategoryData);
