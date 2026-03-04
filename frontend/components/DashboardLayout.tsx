@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   Box,
@@ -126,10 +126,34 @@ export default function DashboardLayout({ children }: Props) {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     router.push('/login');
-  };
+  }, [logout, router]);
+
+  // Déconnexion automatique après 20 minutes d'inactivité
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutes
+    let timer: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        handleLogout();
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(event => window.addEventListener(event, resetTimer));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach(event => window.removeEventListener(event, resetTimer));
+    };
+  }, [isAuthenticated, handleLogout]);
 
   const handleSwitchCompany = async (companyId: number) => {
     try {
