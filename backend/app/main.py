@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from app.core.s3 import s3_enabled
-    logger.info(f"S3 enabled: {s3_enabled()}, bucket: '{settings.AWS_S3_BUCKET}', region: '{settings.AWS_S3_REGION}'")
+    print(f"S3 enabled: {s3_enabled()}, bucket: '{settings.AWS_S3_BUCKET}', region: '{settings.AWS_S3_REGION}'")
     yield
 
 

@@ -218,12 +218,15 @@ def migrate_personal_accounts():
             Company.account_type == AccountType.PERSONAL
         ).all()
 
+        print(f"  Found {len(personal_companies)} personal account(s)")
+
         if not personal_companies:
             return
 
         for company in personal_companies:
             cid = company.id
             changed = False
+            print(f"  Processing company '{company.name}' (id={cid})")
 
             # 1. Vérifier/créer les catégories Quotidien et Plaisirs
             for cat_name, cat_color in [("Quotidien", "#3B82F6"), ("Plaisirs", "#8B5CF6")]:
@@ -302,6 +305,7 @@ def migrate_personal_accounts():
                     Category.type == TransactionType.EXPENSE,
                     Category.parent_id.is_(None),
                 ).first()
+                print(f"    Parent '{parent_name}': {'found (id=' + str(parent_cat.id) + ')' if parent_cat else 'NOT FOUND'}")
                 if parent_cat:
                     for sub in children:
                         exists = db.query(Category).filter(
