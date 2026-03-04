@@ -17,11 +17,17 @@ function getApiBase(): string {
 export const API_BASE_URL = getApiBase();
 
 /**
- * Résout une URL d'image : si c'est une URL complète (S3), la retourne telle quelle.
- * Si c'est un chemin relatif (/uploads/...), préfixe avec API_BASE_URL.
+ * Résout une URL d'image en passant par le proxy backend.
+ * - URLs proxy (/api/files/...) et locales (/uploads/...) : préfixe avec API_BASE_URL
+ * - Anciennes URLs S3 directes : converties en URL proxy
  */
 export function getImageUrl(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
+  // Convertir les anciennes URLs S3 directes en URLs proxy
+  const s3Match = url.match(/^https:\/\/[^/]+\.s3\.[^/]+\.amazonaws\.com\/(.+)$/);
+  if (s3Match) {
+    return `${API_BASE_URL}/api/files/${s3Match[1]}`;
+  }
   if (url.startsWith('http')) return url;
   return `${API_BASE_URL}${url}`;
 }
