@@ -692,7 +692,8 @@ export default function SavingsPieCharts({
                 {isPersonalAccount && (
                   <IconButton
                     size="small"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const pcts: Record<number, number> = {};
                       categories.forEach(c => {
                         pcts[c.id] = c.percentage;
@@ -700,7 +701,7 @@ export default function SavingsPieCharts({
                       setEditPercentages(pcts);
                       setSettingsDialogOpen(true);
                     }}
-                    sx={{ color: theme.palette.text.secondary, p: 0.5 }}
+                    sx={{ color: theme.palette.text.secondary, p: 0.5, zIndex: 10 }}
                   >
                     <SettingsIcon sx={{ fontSize: 18 }} />
                   </IconButton>

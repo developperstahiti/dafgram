@@ -1910,7 +1910,8 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                     {isPersonalAccount && (
                       <IconButton
                         size="small"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           const pcts: Record<number, number> = {};
                           (summary?.categories || []).forEach(c => {
                             pcts[c.id] = c.percentage;
@@ -1918,7 +1919,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                           setEditPercentages(pcts);
                           setSettingsDialogOpen(true);
                         }}
-                        sx={{ color: theme.palette.text.secondary, p: 0.5 }}
+                        sx={{ color: theme.palette.text.secondary, p: 0.5, zIndex: 10 }}
                       >
                         <SettingsIcon sx={{ fontSize: 18 }} />
                       </IconButton>
