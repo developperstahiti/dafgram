@@ -2400,7 +2400,7 @@ Cordialement,
                   {companySettings?.logo_url ? (
                     <Box
                       component="img"
-                      src={`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'}${companySettings.logo_url}`}
+                      src={companySettings.logo_url?.startsWith('http') ? companySettings.logo_url : `${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'}${companySettings.logo_url}`}
                       sx={{
                         width: 100,
                         height: 100,

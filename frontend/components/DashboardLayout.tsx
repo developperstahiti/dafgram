@@ -42,7 +42,7 @@ import {
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuthStore } from '@/store/authStore';
 import { useCompanyStore } from '@/store/companyStore';
-import { authAPI, companiesAPI, API_BASE_URL } from '@/lib/api';
+import { authAPI, companiesAPI, API_BASE_URL, getImageUrl } from '@/lib/api';
 import {
   TextField,
   DialogActions,
@@ -491,7 +491,7 @@ export default function DashboardLayout({ children }: Props) {
             >
               {uc.company.logo_url ? (
                 <img
-                  src={`${API_BASE_URL}${uc.company.logo_url}`}
+                  src={getImageUrl(uc.company.logo_url) || ''}
                   alt="Logo"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
@@ -1007,7 +1007,7 @@ export default function DashboardLayout({ children }: Props) {
                   >
                     {currentCompany?.logo_url ? (
                       <img
-                        src={`${API_BASE_URL}${currentCompany.logo_url}`}
+                        src={getImageUrl(currentCompany.logo_url) || ''}
                         alt="Logo"
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
@@ -1055,7 +1055,7 @@ export default function DashboardLayout({ children }: Props) {
                   sx={{ p: 0.5 }}
                 >
                   <Avatar
-                    src={user?.avatar_url ? `${API_BASE_URL}${user.avatar_url}` : undefined}
+                    src={getImageUrl(user?.avatar_url)}
                     sx={{
                       width: 36,
                       height: 36,

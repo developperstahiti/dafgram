@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useCompanyStore } from '@/store/companyStore';
-import { companiesAPI, API_BASE_URL } from '@/lib/api';
+import { companiesAPI, API_BASE_URL, getImageUrl } from '@/lib/api';
 import {
   Box,
   Grid,
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                     <CircularProgress size={40} sx={{ color: '#F5C518' }} />
                   ) : currentCompany?.logo_url ? (
                     <img
-                      src={`${API_BASE_URL}${currentCompany.logo_url}`}
+                      src={getImageUrl(currentCompany.logo_url) || ''}
                       alt="Logo"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

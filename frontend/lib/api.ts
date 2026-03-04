@@ -16,6 +16,16 @@ function getApiBase(): string {
 // URL pour les images/fichiers (src d'img)
 export const API_BASE_URL = getApiBase();
 
+/**
+ * Résout une URL d'image : si c'est une URL complète (S3), la retourne telle quelle.
+ * Si c'est un chemin relatif (/uploads/...), préfixe avec API_BASE_URL.
+ */
+export function getImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith('http')) return url;
+  return `${API_BASE_URL}${url}`;
+}
+
 // Instance axios avec baseURL dynamique
 export const api = axios.create({
   baseURL: getApiBase(),

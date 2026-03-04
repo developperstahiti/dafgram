@@ -433,7 +433,8 @@ async def upload_avatar(
     db: Session = Depends(get_db)
 ):
     """Uploader la photo de profil de l'utilisateur"""
-    # Vérifier le type de fichier
+    from app.core.s3 import s3_enabled, upload_to_s3, delete_from_s3
+
     allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(
@@ -441,23 +442,26 @@ async def upload_avatar(
             detail="Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP."
         )
 
-    # Générer un nom unique
-    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
-    filename = f"user_{current_user.id}_avatar_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
-
-    # Supprimer l'ancien avatar si existant
+    # Supprimer l'ancien avatar
     if current_user.avatar_url:
-        old_path = os.path.join(UPLOAD_DIR, current_user.avatar_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and current_user.avatar_url.startswith("http"):
+            delete_from_s3(current_user.avatar_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, current_user.avatar_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
 
-    # Sauvegarder le fichier
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    if s3_enabled():
+        avatar_url = await upload_to_s3(file, folder="avatars")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+        filename = f"user_{current_user.id}_avatar_{uuid.uuid4().hex[:8]}.{ext}"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        avatar_url = f"/uploads/{filename}"
 
-    # Mettre à jour l'URL dans la base
-    current_user.avatar_url = f"/uploads/{filename}"
+    current_user.avatar_url = avatar_url
     db.commit()
     db.refresh(current_user)
 
@@ -470,10 +474,15 @@ async def delete_avatar(
     db: Session = Depends(get_db)
 ):
     """Supprimer la photo de profil de l'utilisateur"""
+    from app.core.s3 import s3_enabled, delete_from_s3
+
     if current_user.avatar_url:
-        old_path = os.path.join(UPLOAD_DIR, current_user.avatar_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and current_user.avatar_url.startswith("http"):
+            delete_from_s3(current_user.avatar_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, current_user.avatar_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
         current_user.avatar_url = None
         db.commit()
         db.refresh(current_user)

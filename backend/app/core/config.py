@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "./uploads")
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
 
+    # AWS S3
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+    AWS_S3_BUCKET: str = os.getenv("AWS_S3_BUCKET", "")
+    AWS_S3_REGION: str = os.getenv("AWS_S3_REGION", "eu-west-3")
+
     # Payzen by OSB - Configuration paiement
     PAYZEN_SHOP_ID: str = os.getenv("PAYZEN_SHOP_ID", "")
     PAYZEN_PASSWORD: str = os.getenv("PAYZEN_PASSWORD", "")  # Mot de passe API REST

@@ -288,23 +288,28 @@ async def upload_company_logo(
             detail="Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP."
         )
 
-    # Générer un nom unique
-    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
-    filename = f"company_{company_id}_logo_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    from app.core.s3 import s3_enabled, upload_to_s3, delete_from_s3
 
-    # Supprimer l'ancien logo si existant
+    # Supprimer l'ancien logo
     if company.logo_url:
-        old_path = os.path.join(UPLOAD_DIR, company.logo_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and company.logo_url.startswith("http"):
+            delete_from_s3(company.logo_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, company.logo_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
 
-    # Sauvegarder le fichier
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    if s3_enabled():
+        logo_url = await upload_to_s3(file, folder="logos")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+        filename = f"company_{company_id}_logo_{uuid.uuid4().hex[:8]}.{ext}"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        logo_url = f"/uploads/{filename}"
 
-    # Mettre à jour l'URL dans la base
-    company.logo_url = f"/uploads/{filename}"
+    company.logo_url = logo_url
     db.commit()
     db.refresh(company)
 
@@ -317,6 +322,8 @@ async def delete_company_logo(
     db: Session = Depends(get_db)
 ):
     """Supprimer le logo de l'entreprise courante"""
+    from app.core.s3 import s3_enabled, delete_from_s3
+
     company_id = current_user.current_company_id or current_user.company_id
 
     company = db.query(Company).filter(Company.id == company_id).first()
@@ -324,9 +331,12 @@ async def delete_company_logo(
         raise HTTPException(status_code=404, detail="Entreprise non trouvée")
 
     if company.logo_url:
-        old_path = os.path.join(UPLOAD_DIR, company.logo_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and company.logo_url.startswith("http"):
+            delete_from_s3(company.logo_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, company.logo_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
         company.logo_url = None
         db.commit()
         db.refresh(company)
@@ -439,22 +449,27 @@ async def upload_settings_logo(
             detail="Type de fichier non autorisé. Utilisez JPEG, PNG, GIF ou WebP."
         )
 
-    # Générer un nom unique
-    ext = file.filename.split(".")[-1] if "." in file.filename else "png"
-    filename = f"company_{company_id}_doc_logo_{uuid.uuid4().hex[:8]}.{ext}"
-    filepath = os.path.join(UPLOAD_DIR, filename)
+    from app.core.s3 import s3_enabled, upload_to_s3, delete_from_s3
 
-    # Supprimer l'ancien logo si existant
+    # Supprimer l'ancien logo
     if settings.logo_url:
-        old_path = os.path.join(UPLOAD_DIR, settings.logo_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and settings.logo_url.startswith("http"):
+            delete_from_s3(settings.logo_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, settings.logo_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
 
-    # Sauvegarder le fichier
-    with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    if s3_enabled():
+        settings.logo_url = await upload_to_s3(file, folder="doc-logos")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "png"
+        filename = f"company_{company_id}_doc_logo_{uuid.uuid4().hex[:8]}.{ext}"
+        filepath = os.path.join(UPLOAD_DIR, filename)
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        settings.logo_url = f"/uploads/{filename}"
 
-    settings.logo_url = f"/uploads/{filename}"
     db.commit()
     db.refresh(settings)
 
@@ -467,6 +482,8 @@ async def delete_settings_logo(
     db: Session = Depends(get_db)
 ):
     """Supprimer le logo des documents"""
+    from app.core.s3 import s3_enabled, delete_from_s3
+
     company_id = current_user.current_company_id or current_user.company_id
 
     settings = db.query(CompanySettings).filter(
@@ -474,9 +491,12 @@ async def delete_settings_logo(
     ).first()
 
     if settings and settings.logo_url:
-        old_path = os.path.join(UPLOAD_DIR, settings.logo_url.split("/")[-1])
-        if os.path.exists(old_path):
-            os.remove(old_path)
+        if s3_enabled() and settings.logo_url.startswith("http"):
+            delete_from_s3(settings.logo_url)
+        else:
+            old_path = os.path.join(UPLOAD_DIR, settings.logo_url.split("/")[-1])
+            if os.path.exists(old_path):
+                os.remove(old_path)
         settings.logo_url = None
         db.commit()
         db.refresh(settings)
