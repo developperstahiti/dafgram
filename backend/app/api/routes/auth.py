@@ -155,6 +155,38 @@ def _seed_personal_defaults(db: Session, company_id: int):
                 period_year=None,
             ))
 
+    # Sous-catégories de dépenses
+    subcategories = {
+        "Quotidien": [
+            {"name": "Loyer", "color": "#2563EB"},
+            {"name": "Prêt", "color": "#1D4ED8"},
+            {"name": "EDT", "color": "#F59E0B"},
+            {"name": "Vini", "color": "#10B981"},
+            {"name": "Internet", "color": "#8B5CF6"},
+            {"name": "Courses Alimentaires", "color": "#EF4444"},
+        ],
+        "Plaisirs": [
+            {"name": "Shopping", "color": "#EC4899"},
+            {"name": "Restaurants", "color": "#F97316"},
+            {"name": "Voyages", "color": "#06B6D4"},
+        ],
+    }
+    for parent_name, children in subcategories.items():
+        parent = db.query(Category).filter(
+            Category.company_id == company_id,
+            Category.name == parent_name,
+            Category.type == TransactionType.EXPENSE,
+        ).first()
+        if parent:
+            for sub in children:
+                db.add(Category(
+                    company_id=company_id,
+                    name=sub["name"],
+                    type=TransactionType.EXPENSE,
+                    color=sub["color"],
+                    parent_id=parent.id,
+                ))
+
     # Budget épargne (20%)
     db.add(BudgetCategory(
         company_id=company_id,

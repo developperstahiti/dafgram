@@ -290,22 +290,38 @@ export default function ChargesPage() {
   const handleCreateBaseCategories = async () => {
     const baseCategories = isPersonalAccount
       ? [
-          { name: 'Quotidien', color: '#3B82F6' },   // Bleu - besoins essentiels (50%)
-          { name: 'Plaisirs', color: '#8B5CF6' },     // Violet - envies, loisirs (30%)
+          { name: 'Quotidien', color: '#3B82F6' },
+          { name: 'Plaisirs', color: '#8B5CF6' },
         ]
       : [
-          { name: 'Loyer', color: '#3B82F6' },       // Bleu
-          { name: 'Électricité', color: '#F59E0B' }, // Orange
-          { name: 'Internet', color: '#8B5CF6' },    // Violet
-          { name: 'Salaires', color: '#10B981' },    // Vert
-          { name: 'PUB', color: '#EF4444' },         // Rouge
+          { name: 'Loyer', color: '#3B82F6' },
+          { name: 'Électricité', color: '#F59E0B' },
+          { name: 'Internet', color: '#8B5CF6' },
+          { name: 'Salaires', color: '#10B981' },
+          { name: 'PUB', color: '#EF4444' },
         ];
+
+    const personalSubcategories: Record<string, { name: string; color: string }[]> = {
+      'Quotidien': [
+        { name: 'Loyer', color: '#2563EB' },
+        { name: 'Prêt', color: '#1D4ED8' },
+        { name: 'EDT', color: '#F59E0B' },
+        { name: 'Vini', color: '#10B981' },
+        { name: 'Internet', color: '#8B5CF6' },
+        { name: 'Courses Alimentaires', color: '#EF4444' },
+      ],
+      'Plaisirs': [
+        { name: 'Shopping', color: '#EC4899' },
+        { name: 'Restaurants', color: '#F97316' },
+        { name: 'Voyages', color: '#06B6D4' },
+      ],
+    };
 
     const existingNames = allCategories.map((cat) => cat.name.toLowerCase());
 
     try {
+      // Créer les catégories parentes
       for (const cat of baseCategories) {
-        // Ne pas créer si une catégorie avec ce nom existe déjà
         if (!existingNames.includes(cat.name.toLowerCase())) {
           await bankAPI.createCategory({
             name: cat.name,
@@ -314,6 +330,30 @@ export default function ChargesPage() {
           });
         }
       }
+
+      // Créer les sous-catégories pour les comptes personnels
+      if (isPersonalAccount) {
+        // Récupérer les catégories fraîchement créées pour avoir les IDs
+        const freshCategories = await bankAPI.getCategories();
+        for (const [parentName, children] of Object.entries(personalSubcategories)) {
+          const parent = freshCategories.find(
+            (c: Category) => c.name === parentName && c.type === 'expense' && !c.parent_id
+          );
+          if (parent) {
+            for (const sub of children) {
+              if (!freshCategories.some((c: Category) => c.name === sub.name && c.parent_id === parent.id)) {
+                await bankAPI.createCategory({
+                  name: sub.name,
+                  type: 'expense',
+                  color: sub.color,
+                  parent_id: parent.id,
+                });
+              }
+            }
+          }
+        }
+      }
+
       fetchAllCategories();
       fetchCategories();
     } catch (error) {
