@@ -279,7 +279,48 @@ def migrate_personal_accounts():
                 ))
                 changed = True
 
-            # 3. Remplacer les anciennes catégories d'épargne par les nouvelles
+            # 3. Créer les sous-catégories de dépenses
+            sub_map = {
+                "Quotidien": [
+                    {"name": "Loyer", "color": "#2563EB"},
+                    {"name": "Prêt", "color": "#1D4ED8"},
+                    {"name": "EDT", "color": "#F59E0B"},
+                    {"name": "Vini", "color": "#10B981"},
+                    {"name": "Internet", "color": "#8B5CF6"},
+                    {"name": "Courses Alimentaires", "color": "#EF4444"},
+                ],
+                "Plaisirs": [
+                    {"name": "Shopping", "color": "#EC4899"},
+                    {"name": "Restaurants", "color": "#F97316"},
+                    {"name": "Voyages", "color": "#06B6D4"},
+                ],
+            }
+            for parent_name, children in sub_map.items():
+                parent_cat = db.query(Category).filter(
+                    Category.company_id == cid,
+                    Category.name == parent_name,
+                    Category.type == TransactionType.EXPENSE,
+                    Category.parent_id.is_(None),
+                ).first()
+                if parent_cat:
+                    for sub in children:
+                        exists = db.query(Category).filter(
+                            Category.company_id == cid,
+                            Category.name == sub["name"],
+                            Category.parent_id == parent_cat.id,
+                        ).first()
+                        if not exists:
+                            db.add(Category(
+                                company_id=cid,
+                                name=sub["name"],
+                                type=TransactionType.EXPENSE,
+                                color=sub["color"],
+                                parent_id=parent_cat.id,
+                            ))
+                            changed = True
+                            print(f"    Created subcategory '{sub['name']}' under '{parent_name}'")
+
+            # 4. Remplacer les anciennes catégories d'épargne par les nouvelles
             target_savings = [
                 ("Trading long terme", "Investissements et trading long terme", "#F59E0B", 50),
                 ("Trading moyen terme", "Trading et investissements moyen terme", "#10B981", 30),
