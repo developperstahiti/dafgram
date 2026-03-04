@@ -3304,78 +3304,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                   <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
                     Aucune transaction pour cette catégorie ce mois-ci
                   </Typography>
-                  {isPersonalAccount ? (
-                    <Box sx={{ mt: 3, p: 2, bgcolor: '#FFF', border: '1px solid #E5E7EB', borderRadius: 2, textAlign: 'left', maxWidth: 400, mx: 'auto' }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                        Enregistrer une dépense
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                        <TextField
-                          size="small"
-                          label="Montant"
-                          type="number"
-                          value={personalTxAmount}
-                          onChange={(e) => setPersonalTxAmount(e.target.value)}
-                          inputProps={{ min: 0, step: '0.01' }}
-                          sx={{ flex: 1 }}
-                        />
-                        <TextField
-                          size="small"
-                          label="Description (optionnel)"
-                          value={personalTxDesc}
-                          onChange={(e) => setPersonalTxDesc(e.target.value)}
-                          sx={{ flex: 2 }}
-                        />
-                      </Box>
-                      {personalTxError && (
-                        <Typography variant="caption" sx={{ color: '#EF4444', display: 'block', mb: 1 }}>
-                          {personalTxError}
-                        </Typography>
-                      )}
-                      {personalTxSuccess && (
-                        <Typography variant="caption" sx={{ color: '#10B981', display: 'block', mb: 1 }}>
-                          Dépense enregistrée !
-                        </Typography>
-                      )}
-                      <Button
-                        variant="contained"
-                        fullWidth
-                        disabled={personalTxSaving || !personalTxAmount}
-                        onClick={async () => {
-                          setPersonalTxSaving(true);
-                          setPersonalTxError(null);
-                          setPersonalTxSuccess(false);
-                          try {
-                            await transactionsAPI.create({
-                              type: 'expense',
-                              amount: parseFloat(personalTxAmount),
-                              description: personalTxDesc || selectedCategoryData?.name || 'Dépense',
-                              category_id: selectedCategoryData?.id,
-                              company_id: user?.company_id,
-                              account_type: 'company',
-                              transaction_date: new Date().toISOString(),
-                            });
-                            setPersonalTxAmount('');
-                            setPersonalTxDesc('');
-                            setPersonalTxSuccess(true);
-                            await fetchData();
-                            setTimeout(() => setPersonalTxSuccess(false), 3000);
-                          } catch (err: any) {
-                            setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
-                          } finally {
-                            setPersonalTxSaving(false);
-                          }
-                        }}
-                        sx={{
-                          bgcolor: '#EF4444',
-                          fontWeight: 600,
-                          '&:hover': { bgcolor: '#DC2626' },
-                        }}
-                      >
-                        {personalTxSaving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Enregistrer'}
-                      </Button>
-                    </Box>
-                  ) : (
+                  {!isPersonalAccount && (
                     <>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, maxWidth: 300, mx: 'auto' }}>
                         Importez vos relevés bancaires (PDF ou CSV) pour voir vos transactions ici
@@ -3403,6 +3332,84 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                       </Box>
                     </>
                   )}
+                </Box>
+              )}
+
+              {/* Formulaire d'enregistrement rapide pour profils personnels (toujours visible) */}
+              {isPersonalAccount && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: '#FFF', border: '1px solid #E5E7EB', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                    Enregistrer une dépense
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                    <TextField
+                      size="small"
+                      label="Montant"
+                      type="number"
+                      value={personalTxAmount}
+                      onChange={(e) => setPersonalTxAmount(e.target.value)}
+                      inputProps={{ min: 0, step: '0.01' }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Description (optionnel)"
+                      value={personalTxDesc}
+                      onChange={(e) => setPersonalTxDesc(e.target.value)}
+                      sx={{ flex: 2 }}
+                    />
+                  </Box>
+                  {personalTxError && (
+                    <Typography variant="caption" sx={{ color: '#EF4444', display: 'block', mb: 1 }}>
+                      {personalTxError}
+                    </Typography>
+                  )}
+                  {personalTxSuccess && (
+                    <Typography variant="caption" sx={{ color: '#10B981', display: 'block', mb: 1 }}>
+                      Dépense enregistrée !
+                    </Typography>
+                  )}
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    disabled={personalTxSaving || !personalTxAmount}
+                    onClick={async () => {
+                      setPersonalTxSaving(true);
+                      setPersonalTxError(null);
+                      setPersonalTxSuccess(false);
+                      try {
+                        await transactionsAPI.create({
+                          type: 'expense',
+                          amount: parseFloat(personalTxAmount),
+                          description: personalTxDesc || selectedCategoryData?.name || 'Dépense',
+                          category_id: selectedCategoryData?.id,
+                          company_id: user?.company_id,
+                          account_type: 'company',
+                          transaction_date: new Date().toISOString(),
+                        });
+                        setPersonalTxAmount('');
+                        setPersonalTxDesc('');
+                        setPersonalTxSuccess(true);
+                        await fetchData();
+                        // Recharger les transactions du dialog
+                        if (selectedCategoryData) {
+                          await handleDrillDown(selectedCategoryData);
+                        }
+                        setTimeout(() => setPersonalTxSuccess(false), 3000);
+                      } catch (err: any) {
+                        setPersonalTxError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement');
+                      } finally {
+                        setPersonalTxSaving(false);
+                      }
+                    }}
+                    sx={{
+                      bgcolor: '#EF4444',
+                      fontWeight: 600,
+                      '&:hover': { bgcolor: '#DC2626' },
+                    }}
+                  >
+                    {personalTxSaving ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : 'Enregistrer'}
+                  </Button>
                 </Box>
               )}
             </>
