@@ -3675,7 +3675,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                   }}
                   min={0}
                   max={100}
-                  step={5}
+                  step={1}
                   sx={{
                     color,
                     '& .MuiSlider-thumb': { width: 20, height: 20 },
@@ -3707,7 +3707,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                             }}
                             min={0}
                             max={100}
-                            step={5}
+                            step={1}
                             sx={{
                               color: sub.color,
                               '& .MuiSlider-thumb': { width: 14, height: 14 },

@@ -17,7 +17,7 @@ import {
   AccountBalanceWallet as WalletIcon,
   Savings as SavingsIcon,
 } from '@mui/icons-material';
-import { budgetCategoriesAPI, BudgetSummary, savingsCategoriesAPI, SavingsCategorySummary } from '@/lib/api';
+import { budgetCategoriesAPI, BudgetSummary, BudgetCategory, savingsCategoriesAPI, SavingsCategorySummary, bankAPI, Category, transactionsAPI } from '@/lib/api';
 import { useCompanyStore } from '@/store/companyStore';
 import { formatCurrency } from '@/lib/currency';
 
@@ -32,6 +32,8 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
 
   const [summary, setSummary] = useState<BudgetSummary | null>(null);
   const [savingsSummary, setSavingsSummary] = useState<SavingsCategorySummary | null>(null);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [spendingByCategory, setSpendingByCategory] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
 
   const month = currentDate.getMonth() + 1;
@@ -45,12 +47,27 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [budgetRes, savingsRes] = await Promise.all([
+      const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      const endDate = month === 12
+        ? `${year + 1}-01-01`
+        : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const [budgetRes, savingsRes, catRes, txRes] = await Promise.all([
         budgetCategoriesAPI.getSummary(month, year),
         savingsCategoriesAPI.getSummary(month, year),
+        bankAPI.getCategories(),
+        transactionsAPI.getAll({ type: 'expense', start_date: startDate, end_date: endDate, limit: 500 }),
       ]);
       setSummary(budgetRes.data);
       setSavingsSummary(savingsRes.data);
+      setAllCategories(catRes.data);
+      // Calculer les dépenses par catégorie
+      const byCategory: Record<number, number> = {};
+      for (const tx of txRes.data.items || []) {
+        if (tx.category_id) {
+          byCategory[tx.category_id] = (byCategory[tx.category_id] || 0) + tx.amount;
+        }
+      }
+      setSpendingByCategory(byCategory);
     } catch (err) {
       console.error('Error fetching personal summary:', err);
     } finally {
@@ -92,8 +109,15 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
   const savingsAllocated = (savingsPercentage / 100) * totalRevenue;
   const savingsSpent = savingsSummary?.current_month_spent || 0;
 
-  // Build category rows from budget categories (non-savings)
-  const expenseCategories = (summary?.categories || []).filter(c => !c.is_savings && c.category);
+  // Build category rows from budget categories (non-savings, parents only)
+  const expenseCategories = (summary?.categories || []).filter(
+    c => !c.is_savings && c.category && !c.category.parent_id
+  );
+
+  // Sous-catégories par parent
+  const getSubcategories = (parentCategoryId: number) =>
+    allCategories.filter(c => c.parent_id === parentCategoryId && c.type === 'expense');
+
   // Savings row
   const savingsRow = {
     name: 'Épargne',
@@ -101,16 +125,25 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
     allocated: savingsAllocated,
     spent: savingsSpent,
     percentage: savingsPercentage,
+    subcategories: [] as { name: string; color: string; spent: number }[],
   };
 
   const rows = [
-    ...expenseCategories.map(c => ({
-      name: c.category?.name || 'Catégorie',
-      color: c.category?.color || '#6B7280',
-      allocated: c.allocated_amount,
-      spent: c.spent_amount,
-      percentage: c.percentage,
-    })),
+    ...expenseCategories.map(c => {
+      const subs = c.category_id ? getSubcategories(c.category_id) : [];
+      return {
+        name: c.category?.name || 'Catégorie',
+        color: c.category?.color || '#6B7280',
+        allocated: c.allocated_amount,
+        spent: c.spent_amount,
+        percentage: c.percentage,
+        subcategories: subs.map(sub => ({
+          name: sub.name,
+          color: sub.color,
+          spent: spendingByCategory[sub.id] || 0,
+        })),
+      };
+    }),
     savingsRow,
   ];
 
@@ -238,6 +271,42 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
                       },
                     }}
                   />
+                  {/* Sous-catégories */}
+                  {row.subcategories.length > 0 && (
+                    <Box sx={{ pl: 3, mt: 1, display: 'flex', flexDirection: 'column', gap: 0.8 }}>
+                      {row.subcategories.filter(sub => sub.spent > 0).map(sub => {
+                        const subPercent = row.spent > 0 ? (sub.spent / row.spent) * 100 : 0;
+                        return (
+                          <Box key={sub.name}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.3 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: sub.color }} />
+                                <Typography variant="caption" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
+                                  {sub.name}
+                                </Typography>
+                              </Box>
+                              <Typography variant="caption" sx={{ fontWeight: 600, color: theme.palette.text.primary }}>
+                                {formatAmount(sub.spent)}
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={Math.min(100, subPercent)}
+                              sx={{
+                                height: 4,
+                                borderRadius: 2,
+                                bgcolor: alpha(sub.color, 0.1),
+                                '& .MuiLinearProgress-bar': {
+                                  borderRadius: 2,
+                                  bgcolor: sub.color,
+                                },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
                 </Box>
               );
             })}
