@@ -18,6 +18,7 @@ import {
   CardContent,
   alpha,
   useTheme,
+  useMediaQuery,
   Skeleton,
   Tooltip,
   Chip,
@@ -51,6 +52,7 @@ const MONTH_NAMES = [
 
 export default function DashboardPage() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentCompany } = useCompanyStore();
   const { user } = useAuthStore();
   const isPersonalAccount = currentCompany?.account_type === 'personal';
@@ -215,8 +217,8 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
+      <Box sx={{ mb: { xs: 2, sm: 4 }, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary', fontSize: { xs: '1.5rem', sm: '2.125rem' } }}>
           Vue d'ensemble
         </Typography>
         <Tooltip title={adminMode ? 'Masquer les contrôles admin' : 'Afficher les contrôles admin'}>
@@ -241,7 +243,7 @@ export default function DashboardPage() {
       </Box>
 
       {/* Month Navigation */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
         <IconButton
           onClick={goToPreviousMonth}
           size="small"
@@ -253,7 +255,7 @@ export default function DashboardPage() {
         >
           <ChevronLeft />
         </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', minWidth: 180, textAlign: 'center' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary', minWidth: { xs: 'auto', sm: 180 }, textAlign: 'center', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
           {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
         </Typography>
         <IconButton
@@ -269,48 +271,56 @@ export default function DashboardPage() {
           <ChevronRight />
         </IconButton>
 
-        {/* Boutons rapides revenus/dépenses (personnel) */}
-        {isPersonalAccount && (
-          <>
-            <Box sx={{ flex: 1 }} />
-            <Button
-              variant="contained"
-              startIcon={<TrendingUpIcon sx={{ fontSize: 18 }} />}
-              onClick={() => openTxDialog('revenue')}
-              size="small"
-              sx={{
-                bgcolor: '#10B981',
-                color: '#fff',
-                fontWeight: 600,
-                borderRadius: 2,
-                textTransform: 'none',
-                '&:hover': { bgcolor: '#059669' },
-              }}
-            >
-              + Revenu
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<TrendingDownIcon sx={{ fontSize: 18 }} />}
-              onClick={() => openTxDialog('expense')}
-              size="small"
-              sx={{
-                bgcolor: '#EF4444',
-                color: '#fff',
-                fontWeight: 600,
-                borderRadius: 2,
-                textTransform: 'none',
-                '&:hover': { bgcolor: '#DC2626' },
-              }}
-            >
-              + Dépense
-            </Button>
-          </>
-        )}
       </Box>
 
+      {/* Boutons rapides revenus/dépenses (personnel) */}
+      {isPersonalAccount && (
+        <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, mt: 2, justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            startIcon={<TrendingUpIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+            onClick={() => openTxDialog('revenue')}
+            size={isMobile ? 'medium' : 'small'}
+            sx={{
+              flex: { xs: 1, sm: 'none' },
+              maxWidth: { sm: 200 },
+              bgcolor: '#10B981',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              textTransform: 'none',
+              py: { xs: 1.2, sm: 0.8 },
+              fontSize: { xs: '0.9rem', sm: '0.875rem' },
+              '&:hover': { bgcolor: '#059669' },
+            }}
+          >
+            + Revenu
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<TrendingDownIcon sx={{ fontSize: { xs: 16, sm: 18 } }} />}
+            onClick={() => openTxDialog('expense')}
+            size={isMobile ? 'medium' : 'small'}
+            sx={{
+              flex: { xs: 1, sm: 'none' },
+              maxWidth: { sm: 200 },
+              bgcolor: '#EF4444',
+              color: '#fff',
+              fontWeight: 600,
+              borderRadius: 2,
+              textTransform: 'none',
+              py: { xs: 1.2, sm: 0.8 },
+              fontSize: { xs: '0.9rem', sm: '0.875rem' },
+              '&:hover': { bgcolor: '#DC2626' },
+            }}
+          >
+            + Dépense
+          </Button>
+        </Box>
+      )}
+
       {/* Grille principale */}
-      <Grid container spacing={2} sx={{ mt: 2 }}>
+      <Grid container spacing={2} sx={{ mt: isPersonalAccount ? 0.5 : 2 }}>
         {/* Colonne gauche: Camemberts + Alertes */}
         <Grid item xs={12} lg={isPersonalAccount ? 12 : 9}>
           {/* Sous-grille pour les camemberts */}
@@ -513,6 +523,7 @@ export default function DashboardPage() {
           onClose={() => !txSaving && setTxDialogOpen(false)}
           maxWidth="xs"
           fullWidth
+          fullScreen={isMobile}
         >
           <DialogTitle sx={{ fontWeight: 700, color: txType === 'revenue' ? '#10B981' : '#EF4444' }}>
             {txType === 'revenue' ? 'Nouveau revenu' : 'Nouvelle dépense'}

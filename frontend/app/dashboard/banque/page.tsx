@@ -36,6 +36,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Pagination,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -87,6 +89,8 @@ interface Stats {
 }
 
 export default function ComptabilitePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useAuthStore();
   const { currentCompany, fetchCurrentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
@@ -813,8 +817,8 @@ export default function ComptabilitePage() {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   {/* Balance visuelle */}
-                  <Box sx={{ position: 'relative', width: 180, height: 120, flexShrink: 0 }}>
-                    <svg viewBox="0 0 180 120" width="180" height="120">
+                  <Box sx={{ position: 'relative', width: { xs: 120, sm: 180 }, height: { xs: 80, sm: 120 }, flexShrink: 0 }}>
+                    <svg viewBox="0 0 180 120" width="100%" height="100%">
                       {/* Socle */}
                       <path d="M80 115 L100 115 L90 95 Z" fill="#B8860B" />
                       <rect x="88" y="45" width="4" height="50" fill="#B8860B" />
@@ -1022,7 +1026,7 @@ export default function ComptabilitePage() {
               <ChevronLeft fontSize="small" />
             </IconButton>
 
-            <FormControl size="small" sx={{ minWidth: 120 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '40%', sm: 120 } }}>
               <InputLabel>Mois</InputLabel>
               <Select
                 value={filterMonth || ''}
@@ -1056,7 +1060,7 @@ export default function ComptabilitePage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 100 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '30%', sm: 100 } }}>
               <InputLabel>Année</InputLabel>
               <Select
                 value={filterYear || ''}
@@ -1104,7 +1108,7 @@ export default function ComptabilitePage() {
           </Box>
 
           {/* Filtre par type */}
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '45%', sm: 120 } }}>
             <InputLabel>Type</InputLabel>
             <Select
               value={filterType}
@@ -1119,7 +1123,7 @@ export default function ComptabilitePage() {
           </FormControl>
 
           {/* Filtre par catégorie */}
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '45%', sm: 150 } }}>
             <InputLabel>Catégorie</InputLabel>
             <Select
               value={filterCategoryId || ''}
@@ -1449,7 +1453,7 @@ export default function ComptabilitePage() {
       <Dialog open={openTransactionDialog} onClose={() => {
         setOpenTransactionDialog(false);
         setNewTransaction({ type: 'expense', amount: 0, description: '', category_id: 0, savings_category_id: null });
-      }} maxWidth="sm" fullWidth>
+      }} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>Nouvelle transaction</DialogTitle>
         <DialogContent>
           <TextField
@@ -1559,6 +1563,7 @@ export default function ComptabilitePage() {
         }}
         maxWidth="lg"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -1844,6 +1849,7 @@ export default function ComptabilitePage() {
         onClose={() => setOpenSettingsDialog(false)}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -2013,7 +2019,7 @@ export default function ComptabilitePage() {
       </Dialog>
 
       {/* Dialog création catégorie */}
-      <Dialog open={openCategoryDialog} onClose={() => setOpenCategoryDialog(false)} maxWidth="xs" fullWidth>
+      <Dialog open={openCategoryDialog} onClose={() => setOpenCategoryDialog(false)} maxWidth="xs" fullWidth fullScreen={isMobile}>
         <DialogTitle>Nouvelle catégorie</DialogTitle>
         <DialogContent>
           <TextField
@@ -2076,7 +2082,7 @@ export default function ComptabilitePage() {
       </Dialog>
 
       {/* Dialog création/édition règle */}
-      <Dialog open={openRuleDialog} onClose={() => { setOpenRuleDialog(false); setEditingRule(null); }} maxWidth="sm" fullWidth>
+      <Dialog open={openRuleDialog} onClose={() => { setOpenRuleDialog(false); setEditingRule(null); }} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>{editingRule ? 'Modifier la règle' : 'Nouvelle règle'}</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
@@ -2199,6 +2205,7 @@ export default function ComptabilitePage() {
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -2313,6 +2320,7 @@ export default function ComptabilitePage() {
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

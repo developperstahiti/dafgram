@@ -25,6 +25,7 @@ import {
   IconButton,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Business,
@@ -50,6 +51,7 @@ import {
 
 export default function SettingsPage() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const { currentCompany, fetchCurrentCompany, updateCompany, isLoading } = useCompanyStore();
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -197,7 +199,7 @@ export default function SettingsPage() {
   if (isLoading && !currentCompany) {
     return (
       <DashboardLayout>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: { xs: 300, sm: 400 } }}>
           <CircularProgress sx={{ color: '#F5C518' }} />
         </Box>
       </DashboardLayout>
@@ -257,8 +259,8 @@ export default function SettingsPage() {
                 <Box
                   sx={{
                     position: 'relative',
-                    width: 120,
-                    height: 120,
+                    width: { xs: 100, sm: 120 },
+                    height: { xs: 100, sm: 120 },
                     borderRadius: 3,
                     overflow: 'hidden',
                     bgcolor: currentCompany?.logo_url ? 'transparent' : alpha('#F5C518', 0.1),
@@ -327,7 +329,7 @@ export default function SettingsPage() {
                       sx={{
                         bgcolor: '#F5C518',
                         color: '#1A1A1A',
-                        minWidth: 100,
+                        minWidth: { xs: 80, sm: 100 },
                         '&:hover': { bgcolor: '#E0B000' },
                       }}
                     >
@@ -657,6 +659,7 @@ export default function SettingsPage() {
         onClose={() => !isDeleting && setDeleteDialogOpen(false)}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ fontWeight: 700, color: '#EF4444' }}>
           Supprimer l'espace "{currentCompany?.name}"

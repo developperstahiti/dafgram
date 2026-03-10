@@ -161,7 +161,7 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
             <Box
               sx={{
                 flex: 1,
-                minWidth: 140,
+                minWidth: { xs: '45%', sm: 140 },
                 p: 2,
                 borderRadius: 2,
                 bgcolor: alpha('#10B981', 0.08),
@@ -183,7 +183,7 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
             <Box
               sx={{
                 flex: 1,
-                minWidth: 140,
+                minWidth: { xs: '45%', sm: 140 },
                 p: 2,
                 borderRadius: 2,
                 bgcolor: alpha('#EF4444', 0.08),
@@ -205,7 +205,7 @@ export default function PersonalExpenseSummary({ currentDate }: Props) {
             <Box
               sx={{
                 flex: 1,
-                minWidth: 140,
+                minWidth: { xs: '45%', sm: 140 },
                 p: 2,
                 borderRadius: 2,
                 bgcolor: alpha(remaining >= 0 ? '#F5C518' : '#EF4444', 0.08),

@@ -21,6 +21,7 @@ import {
   DialogActions,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
@@ -59,6 +60,7 @@ export default function SavingsPieCharts({
   renderMode = 'full',
 }: SavingsPieChartsProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
   const isPersonalAccount = currentCompany?.account_type === 'personal';
@@ -570,7 +572,8 @@ export default function SavingsPieCharts({
       onClose={() => setSettingsDialogOpen(false)}
       maxWidth="xs"
       fullWidth
-      PaperProps={{ sx: { borderRadius: 3 } }}
+      fullScreen={isMobile}
+      PaperProps={{ sx: { borderRadius: isMobile ? 0 : 3 } }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -840,9 +843,10 @@ export default function SavingsPieCharts({
           onClose={() => setDetailDialogOpen(false)}
           maxWidth="md"
           fullWidth
+          fullScreen={isMobile}
           PaperProps={{
             sx: {
-              borderRadius: 3,
+              borderRadius: isMobile ? 0 : 3,
               bgcolor: theme.palette.background.paper,
             },
           }}
@@ -928,7 +932,7 @@ export default function SavingsPieCharts({
                 <Typography color="text.secondary" textAlign="center">
                   Aucune transaction ce mois-ci
                 </Typography>
-                <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 300 }}>
+                <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 300 } }}>
                   Pour assigner des transactions à cette épargne, allez dans Banque et cliquez sur l'icône tirelire
                 </Typography>
                 <Box
@@ -983,7 +987,7 @@ export default function SavingsPieCharts({
           </IconButton>
           <Typography variant="h6" sx={{
             fontWeight: 600,
-            minWidth: 180,
+            minWidth: { xs: 'auto', sm: 180 },
             textAlign: 'center',
             textTransform: 'capitalize',
             color: theme.palette.text.primary,
@@ -1107,7 +1111,7 @@ export default function SavingsPieCharts({
                   <Typography color="text.secondary" textAlign="center" sx={{ fontWeight: 500 }}>
                     Aucune catégorie d'épargne configurée
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 250 }}>
+                  <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 250 } }}>
                     Configurez vos catégories d'épargne pour visualiser la répartition
                   </Typography>
                 </Box>
@@ -1200,9 +1204,10 @@ export default function SavingsPieCharts({
         onClose={() => setDetailDialogOpen(false)}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: theme.palette.background.paper,
           },
         }}
@@ -1288,7 +1293,7 @@ export default function SavingsPieCharts({
               <Typography color="text.secondary" textAlign="center">
                 Aucune transaction ce mois-ci
               </Typography>
-              <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 300 }}>
+              <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 300 } }}>
                 Pour assigner des transactions à cette épargne, allez dans Banque et cliquez sur l'icône tirelire
               </Typography>
               <Box

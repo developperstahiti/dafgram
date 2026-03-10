@@ -37,6 +37,7 @@ import {
   Slider,
   DialogActions,
   useTheme,
+  useMediaQuery,
   alpha,
   Fade,
 } from '@mui/material';
@@ -102,6 +103,7 @@ interface SubcategoryTransactions {
 
 export default function BudgetPieCharts({ onCategoryClick, currentDate: externalDate, renderMode = 'full', hideUnallocated = false }: BudgetPieChartsProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const { currentCompany } = useCompanyStore();
   const { user } = useAuthStore();
@@ -885,7 +887,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
               p: 2,
               borderRadius: 2,
               boxShadow: theme.shadows[8],
-              minWidth: 180,
+              minWidth: { xs: 'auto', sm: 180 },
               border: `1px solid ${theme.palette.divider}`,
               zIndex: 9999,
               position: 'relative',
@@ -919,7 +921,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
               p: 2,
               borderRadius: 2,
               boxShadow: theme.shadows[8],
-              minWidth: 180,
+              minWidth: { xs: 'auto', sm: 180 },
               border: `1px solid ${theme.palette.divider}`,
               zIndex: 9999,
               position: 'relative',
@@ -1223,8 +1225,8 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
               border: `1px solid ${theme.palette.divider}`,
               boxShadow: theme.shadows[8],
               textAlign: 'center',
-              maxWidth: 360,
-              mx: 2,
+              maxWidth: { xs: '90%', sm: 360 },
+              mx: 'auto',
             }}
           >
             {budgetsConfiguredButNoRevenue ? (
@@ -1294,7 +1296,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                     p: 1.5,
                     bgcolor: alpha(theme.palette.grey[500], 0.1),
                     borderRadius: 2,
-                    minWidth: 100
+                    minWidth: { xs: 80, sm: 100 }
                   }}>
                     <Typography variant="caption" color="text.secondary">
                       Montant
@@ -1308,7 +1310,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                     p: 1.5,
                     bgcolor: alpha(theme.palette.grey[500], 0.1),
                     borderRadius: 2,
-                    minWidth: 100
+                    minWidth: { xs: 80, sm: 100 }
                   }}>
                     <Typography variant="caption" color="text.secondary">
                       Pourcentage
@@ -1435,7 +1437,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                         {format(new Date(tx.transaction_date), 'dd/MM/yyyy')}
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2" noWrap sx={{ maxWidth: 200, color: theme.palette.text.primary }}>
+                        <Typography variant="body2" noWrap sx={{ maxWidth: { xs: '40vw', sm: 200 }, color: theme.palette.text.primary }}>
                           {tx.description}
                         </Typography>
                       </TableCell>
@@ -1652,7 +1654,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                     ) : (
                       <Box
                         sx={{
-                          height: 280,
+                          height: { xs: 220, sm: 280 },
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -2111,7 +2113,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                 ) : (
                   <Box
                     sx={{
-                      height: 180,
+                      height: { xs: 140, sm: 180 },
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
@@ -2409,6 +2411,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
         onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: { borderRadius: 3, minHeight: '60vh' }
         }}
@@ -2995,6 +2998,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
         open={detailDialogOpen}
         onClose={handleCloseDetailDialog}
         maxWidth="md"
+        fullScreen={isMobile}
         fullWidth
         PaperProps={{
           sx: { borderRadius: 3, minHeight: '50vh' }
@@ -3347,6 +3351,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
         onClose={handleCloseDrillDownDialog}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
             borderRadius: 3,
@@ -3427,7 +3432,7 @@ export default function BudgetPieCharts({ onCategoryClick, currentDate: external
                             {format(new Date(tx.transaction_date), 'dd/MM/yyyy')}
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" noWrap sx={{ maxWidth: 300, color: theme.palette.text.primary }}>
+                            <Typography variant="body2" noWrap sx={{ maxWidth: { xs: '50vw', sm: 300 }, color: theme.palette.text.primary }}>
                               {tx.description}
                             </Typography>
                           </TableCell>

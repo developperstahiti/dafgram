@@ -402,7 +402,7 @@ export default function DashboardLayout({ children }: Props) {
           mt: 1,
           borderRadius: 2,
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-          minWidth: 220,
+          minWidth: { xs: '70vw', sm: 220 },
         },
       }}
     >
@@ -473,7 +473,7 @@ export default function DashboardLayout({ children }: Props) {
           mt: 1,
           borderRadius: 2,
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)',
-          minWidth: 200,
+          minWidth: { xs: '70vw', sm: 200 },
         },
       }}
     >
@@ -1113,7 +1113,8 @@ export default function DashboardLayout({ children }: Props) {
         onClose={() => setMobileDrawerOpen(false)}
         PaperProps={{
           sx: {
-            width: 280,
+            width: '80vw',
+            maxWidth: 300,
             bgcolor: resolvedMode === 'dark' ? '#1A1A1A' : '#FFFFFF',
           },
         }}
@@ -1254,8 +1255,8 @@ export default function DashboardLayout({ children }: Props) {
       <Box
         component="main"
         sx={{
-          p: { xs: 2, sm: 3 },
-          maxWidth: '1400px',
+          p: { xs: 1.5, sm: 2, md: 3 },
+          maxWidth: { xs: '100%', lg: '92%', xl: '1400px' },
           mx: 'auto',
         }}
       >

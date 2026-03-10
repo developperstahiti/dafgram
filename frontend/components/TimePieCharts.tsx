@@ -21,6 +21,7 @@ import {
   LinearProgress,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ChevronLeft as ChevronLeftIcon,
@@ -66,6 +67,7 @@ export default function TimePieCharts({
   renderMode = 'full',
 }: TimePieChartsProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const containerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { currentCompany } = useCompanyStore();
@@ -736,9 +738,10 @@ export default function TimePieCharts({
           onClose={() => setDetailDialogOpen(false)}
           maxWidth="md"
           fullWidth
+          fullScreen={isMobile}
           PaperProps={{
             sx: {
-              borderRadius: 3,
+              borderRadius: isMobile ? 0 : 3,
               bgcolor: theme.palette.background.paper,
             },
           }}
@@ -840,7 +843,7 @@ export default function TimePieCharts({
                 <Typography color="text.secondary" textAlign="center">
                   Aucune entrée de temps pour cette catégorie ce mois-ci
                 </Typography>
-                <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 300 }}>
+                <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 300 } }}>
                   Ajoutez des entrées de temps depuis la page Temps
                 </Typography>
                 <Box
@@ -892,7 +895,7 @@ export default function TimePieCharts({
           </IconButton>
           <Typography variant="h6" sx={{
             fontWeight: 600,
-            minWidth: 180,
+            minWidth: { xs: 'auto', sm: 180 },
             textAlign: 'center',
             textTransform: 'capitalize',
             color: theme.palette.text.primary,
@@ -1011,7 +1014,7 @@ export default function TimePieCharts({
                   <Typography color="text.secondary" textAlign="center" sx={{ fontWeight: 500 }}>
                     Aucun temps enregistré ce mois-ci
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 250 }}>
+                  <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 250 } }}>
                     Ajoutez des entrées de temps pour visualiser la répartition
                   </Typography>
                 </Box>
@@ -1125,9 +1128,10 @@ export default function TimePieCharts({
         onClose={() => setDetailDialogOpen(false)}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: theme.palette.background.paper,
           },
         }}
@@ -1229,7 +1233,7 @@ export default function TimePieCharts({
               <Typography color="text.secondary" textAlign="center">
                 Aucune entrée de temps pour cette catégorie ce mois-ci
               </Typography>
-              <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: 300 }}>
+              <Typography variant="caption" color="text.secondary" textAlign="center" sx={{ maxWidth: { xs: '80vw', sm: 300 } }}>
                 Ajoutez des entrées de temps depuis la page Temps
               </Typography>
               <Box
@@ -1264,7 +1268,8 @@ export default function TimePieCharts({
         onClose={() => setEditEntryDialogOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 2 } }}
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: isMobile ? 0 : 2 } }}
       >
         <DialogTitle>Modifier l'entrée</DialogTitle>
         <DialogContent>

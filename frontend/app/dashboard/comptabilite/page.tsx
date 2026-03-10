@@ -42,6 +42,8 @@ import {
   InputLabel,
   Select,
   Tooltip,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -106,6 +108,8 @@ function TabPanel(props: TabPanelProps) {
 
 
 export default function ComptabilitePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentCompany, fetchCurrentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1535,9 +1539,9 @@ export default function ComptabilitePage() {
             size="small"
             value={quotesFilterDate}
             onChange={(e) => setQuotesFilterDate(e.target.value)}
-            sx={{ width: 140, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
+            sx={{ width: { xs: '45%', sm: 140 }, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
           />
-          <FormControl size="small" sx={{ minWidth: 110 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '40%', sm: 110 } }}>
             <Select
               value={quotesFilterStatus}
               displayEmpty
@@ -1557,7 +1561,7 @@ export default function ComptabilitePage() {
             placeholder="Client..."
             value={quotesFilterClient}
             onChange={(e) => setQuotesFilterClient(e.target.value)}
-            sx={{ width: 120, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
+            sx={{ width: { xs: '45%', sm: 120 }, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
           />
           {(quotesFilterDate || quotesFilterStatus || quotesFilterClient) && (
             <Chip
@@ -1617,7 +1621,7 @@ export default function ComptabilitePage() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <FormControl size="small" sx={{ minWidth: { xs: 100, sm: 120 } }}>
                       <Select
                         value={quote.status}
                         onChange={(e) => handleQuoteStatusChangeFromList(quote, e.target.value)}
@@ -1651,7 +1655,7 @@ export default function ComptabilitePage() {
       </TabPanel>
 
       {/* Dialog avertissement date dépassée */}
-      <Dialog open={openExpiredWarningDialog} onClose={handleCancelExpiredQuote} maxWidth="sm" fullWidth>
+      <Dialog open={openExpiredWarningDialog} onClose={handleCancelExpiredQuote} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle sx={{ bgcolor: '#FEF3C7', color: '#92400E' }}>
           Attention : Date de validité dépassée
         </DialogTitle>
@@ -1681,7 +1685,7 @@ export default function ComptabilitePage() {
       </Dialog>
 
       {/* Dialog création de facture */}
-      <Dialog open={openCreateInvoiceDialog} onClose={() => setOpenCreateInvoiceDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog open={openCreateInvoiceDialog} onClose={() => setOpenCreateInvoiceDialog(false)} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>
           Créer une facture ?
         </DialogTitle>
@@ -1795,9 +1799,9 @@ export default function ComptabilitePage() {
             size="small"
             value={invoicesFilterDate}
             onChange={(e) => setInvoicesFilterDate(e.target.value)}
-            sx={{ width: 140, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
+            sx={{ width: { xs: '45%', sm: 140 }, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
           />
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: '40%', sm: 120 } }}>
             <Select
               value={invoicesFilterStatus}
               displayEmpty
@@ -1818,7 +1822,7 @@ export default function ComptabilitePage() {
             placeholder="Client..."
             value={invoicesFilterClient}
             onChange={(e) => setInvoicesFilterClient(e.target.value)}
-            sx={{ width: 120, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
+            sx={{ width: { xs: '45%', sm: 120 }, '& .MuiInputBase-input': { py: 0.5, fontSize: '0.875rem' } }}
           />
           {(invoicesFilterDate || invoicesFilterStatus || invoicesFilterClient) && (
             <Chip
@@ -1982,7 +1986,7 @@ export default function ComptabilitePage() {
                 </InputAdornment>
               ),
             }}
-            sx={{ width: 300 }}
+            sx={{ width: { xs: '100%', sm: 300 } }}
           />
         </Box>
 
@@ -2402,8 +2406,8 @@ Cordialement,
                       component="img"
                       src={companySettings.logo_url?.startsWith('http') ? companySettings.logo_url : `${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'}${companySettings.logo_url}`}
                       sx={{
-                        width: 100,
-                        height: 100,
+                        width: { xs: 80, sm: 100 },
+                        height: { xs: 80, sm: 100 },
                         objectFit: 'contain',
                         border: '1px solid #E5E7EB',
                         borderRadius: 2,
@@ -2412,8 +2416,8 @@ Cordialement,
                   ) : (
                     <Box
                       sx={{
-                        width: 100,
-                        height: 100,
+                        width: { xs: 80, sm: 100 },
+                        height: { xs: 80, sm: 100 },
                         border: '2px dashed #E5E7EB',
                         borderRadius: 2,
                         display: 'flex',
@@ -2821,6 +2825,7 @@ Cordialement,
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           {editingClient ? 'Modifier le client' : 'Nouveau client'}
@@ -3171,6 +3176,7 @@ Cordialement,
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -3263,6 +3269,7 @@ Cordialement,
         }}
         maxWidth="lg"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -3615,6 +3622,7 @@ Cordialement,
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -3803,6 +3811,7 @@ Cordialement,
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#F59E0B' }}>
@@ -3865,6 +3874,7 @@ Cordialement,
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
@@ -4064,6 +4074,7 @@ Cordialement,
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -4171,6 +4182,7 @@ Cordialement,
         }}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box>
@@ -4388,6 +4400,7 @@ Cordialement,
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -4495,6 +4508,7 @@ Cordialement,
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #E5E7EB' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -4584,6 +4598,7 @@ Cordialement,
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           {editingBankAccount ? 'Modifier le compte bancaire' : 'Ajouter un compte bancaire'}

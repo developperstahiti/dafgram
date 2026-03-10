@@ -34,6 +34,7 @@ import {
   Tooltip,
   alpha,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -55,6 +56,7 @@ import { HexColorPicker } from 'react-colorful';
 
 export default function ChargesPage() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { currentCompany, fetchCurrentCompany } = useCompanyStore();
   const currency = currentCompany?.currency || 'EUR';
   const isPersonalAccount = currentCompany?.account_type === 'personal';
@@ -427,9 +429,10 @@ export default function ChargesPage() {
         onClose={() => setSettingsDialogOpen(false)}
         maxWidth="lg"
         fullWidth
+        fullScreen={isMobile}
         PaperProps={{
           sx: {
-            borderRadius: 3,
+            borderRadius: isMobile ? 0 : 3,
             bgcolor: alpha(theme.palette.background.paper, 0.95),
             backdropFilter: 'blur(10px)',
             maxHeight: '90vh',
@@ -655,23 +658,23 @@ export default function ChargesPage() {
                   zIndex: 1,
                 }}
               >
-                <Box sx={{ width: 40 }} />
+                <Box sx={{ width: { xs: 24, sm: 40 } }} />
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase' }}>
                     Catégorie
                   </Typography>
                 </Box>
-                <Box sx={{ width: 80, textAlign: 'center' }}>
+                <Box sx={{ width: { xs: 50, sm: 80 }, textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase' }}>
                     %
                   </Typography>
                 </Box>
-                <Box sx={{ width: 100, textAlign: 'right' }}>
+                <Box sx={{ width: { xs: 70, sm: 100 }, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase' }}>
                     Budget
                   </Typography>
                 </Box>
-                <Box sx={{ width: 80, textAlign: 'center' }}>
+                <Box sx={{ width: { xs: 60, sm: 80 }, textAlign: 'center' }}>
                   <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase' }}>
                     Actions
                   </Typography>
@@ -706,7 +709,7 @@ export default function ChargesPage() {
                           )}
                         </Box>
                       </Box>
-                      <Box sx={{ width: 80, textAlign: 'center' }}>
+                      <Box sx={{ width: { xs: 50, sm: 80 }, textAlign: 'center' }}>
                         {budget ? (
                           <Chip
                             label={`${budget.percentage.toFixed(1)}%`}
@@ -721,12 +724,12 @@ export default function ChargesPage() {
                           <Typography variant="body2" color="text.secondary">-</Typography>
                         )}
                       </Box>
-                      <Box sx={{ width: 100, textAlign: 'right' }}>
+                      <Box sx={{ width: { xs: 70, sm: 100 }, textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                         <Typography variant="body2">
                           {budget ? formatCurrency(budget.allocated_amount, currency) : '-'}
                         </Typography>
                       </Box>
-                      <Box sx={{ width: 80, textAlign: 'center' }}>
+                      <Box sx={{ width: { xs: 60, sm: 80 }, textAlign: 'center' }}>
                         {budget ? (
                           <>
                             <IconButton size="small" onClick={() => handleEditBudgetCategory(budget)}>
@@ -777,6 +780,7 @@ export default function ChargesPage() {
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           {editingCategory ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
@@ -896,6 +900,7 @@ export default function ChargesPage() {
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>
           {editingBudget ? 'Modifier le pourcentage' : 'Ajouter un budget par catégorie'}
@@ -1038,6 +1043,7 @@ export default function ChargesPage() {
         }}
         maxWidth="sm"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>Déplacer la catégorie</DialogTitle>
         <DialogContent>
