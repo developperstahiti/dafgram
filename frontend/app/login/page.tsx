@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { authAPI } from '@/lib/api';
@@ -117,12 +117,25 @@ const personalNeeds = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, error: authError, isLoading: authLoading, setToken } = useAuthStore();
+  const { login, setToken, fetchUser } = useAuthStore();
 
-  // Login state
+  // Si un token existe, vérifier s'il est valide et rediriger
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      fetchUser().then(() => {
+        if (useAuthStore.getState().isAuthenticated) {
+          router.push('/dashboard');
+        }
+      });
+    }
+  }, []);
+
+  // Login state - state local pour ne pas dépendre du store global
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Register dialog state
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -164,12 +177,15 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(null);
+    setLoginLoading(true);
 
     try {
       await login(loginEmail, loginPassword);
       router.push('/dashboard');
     } catch (err: any) {
       setLoginError(err.response?.data?.detail || 'Email ou mot de passe incorrect');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -387,45 +403,6 @@ export default function LoginPage() {
           </Typography>
 
           <Grid container spacing={2}>
-            {/* Professionnel */}
-            <Grid item xs={12} sm={6}>
-              <Card
-                onClick={() => setAccountType('business')}
-                sx={{
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: accountType === 'business' ? '2px solid #F5C518' : '2px solid transparent',
-                  boxShadow: accountType === 'business' ? '0 4px 20px rgba(245, 197, 24, 0.3)' : '0 2px 10px rgba(0,0,0,0.08)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': { boxShadow: '0 4px 20px rgba(0,0,0,0.12)' },
-                }}
-              >
-                <CardContent sx={{ p: 3, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 60,
-                      height: 60,
-                      borderRadius: '50%',
-                      bgcolor: accountType === 'business' ? '#F5C51820' : '#F3F4F6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    <BusinessIcon sx={{ fontSize: 30, color: accountType === 'business' ? '#F5C518' : '#6B7280' }} />
-                  </Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Professionnel
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Entreprise, indépendant ou association
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
             {/* Personnel */}
             <Grid item xs={12} sm={6}>
               <Card
@@ -462,6 +439,67 @@ export default function LoginPage() {
                     Gestion de finances personnelles
                   </Typography>
                 </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Professionnel - désactivé */}
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  cursor: 'not-allowed',
+                  border: '2px solid transparent',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                  opacity: 0.5,
+                  position: 'relative',
+                }}
+              >
+                <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      bgcolor: '#F3F4F6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                    }}
+                  >
+                    <BusinessIcon sx={{ fontSize: 30, color: '#9CA3AF' }} />
+                  </Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5, color: '#9CA3AF' }}>
+                    Professionnel
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Entreprise, indépendant ou association
+                  </Typography>
+                </CardContent>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 3,
+                  }}
+                >
+                  <Chip
+                    label="Bientôt disponible"
+                    sx={{
+                      bgcolor: '#6B7280',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                    }}
+                  />
+                </Box>
               </Card>
             </Grid>
           </Grid>
@@ -865,9 +903,9 @@ export default function LoginPage() {
 
           {/* Login Form */}
           <Box component="form" onSubmit={handleLogin}>
-            {(loginError || authError) && (
+            {loginError && (
               <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-                {loginError || authError}
+                {loginError}
               </Alert>
             )}
 
@@ -931,7 +969,7 @@ export default function LoginPage() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={authLoading}
+              disabled={loginLoading}
               sx={{
                 py: 1.5,
                 bgcolor: '#F5C518',
@@ -941,7 +979,7 @@ export default function LoginPage() {
                 '&:hover': { bgcolor: '#E0B000' },
               }}
             >
-              {authLoading ? <CircularProgress size={24} sx={{ color: '#1A1A1A' }} /> : 'Se connecter'}
+              {loginLoading ? <CircularProgress size={24} sx={{ color: '#1A1A1A' }} /> : 'Se connecter'}
             </Button>
           </Box>
 
