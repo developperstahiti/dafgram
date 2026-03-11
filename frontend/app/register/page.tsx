@@ -401,61 +401,6 @@ function RegisterContent() {
           </Typography>
 
           <Grid container spacing={3} justifyContent="center">
-            {/* Professionnel */}
-            <Grid item xs={12} sm={6}>
-              <Card
-                onClick={() => setAccountType('business')}
-                sx={{
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  border: accountType === 'business' ? '2px solid #F5C518' : '2px solid transparent',
-                  boxShadow: accountType === 'business' ? '0 4px 20px rgba(245, 197, 24, 0.3)' : '0 2px 10px rgba(0,0,0,0.08)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: 4, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      bgcolor: accountType === 'business' ? '#F5C51820' : '#F3F4F6',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    <BusinessIcon sx={{ fontSize: 40, color: accountType === 'business' ? '#F5C518' : '#6B7280' }} />
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                    Professionnel
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Je suis une entreprise, un indépendant ou une association
-                  </Typography>
-                  {accountType === 'business' && (
-                    <Chip
-                      icon={<CheckIcon sx={{ fontSize: 16 }} />}
-                      label="Sélectionné"
-                      size="small"
-                      sx={{
-                        mt: 2,
-                        bgcolor: '#10B981',
-                        color: 'white',
-                        fontWeight: 600,
-                      }}
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-
             {/* Personnel */}
             <Grid item xs={12} sm={6}>
               <Card
@@ -508,6 +453,67 @@ function RegisterContent() {
                     />
                   )}
                 </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Professionnel - désactivé */}
+            <Grid item xs={12} sm={6}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  cursor: 'not-allowed',
+                  border: '2px solid transparent',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                  opacity: 0.5,
+                  position: 'relative',
+                }}
+              >
+                <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      bgcolor: '#F3F4F6',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                    }}
+                  >
+                    <BusinessIcon sx={{ fontSize: 40, color: '#9CA3AF' }} />
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, color: '#9CA3AF' }}>
+                    Professionnel
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Je suis une entreprise, un indépendant ou une association
+                  </Typography>
+                </CardContent>
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 3,
+                  }}
+                >
+                  <Chip
+                    label="Bientôt disponible"
+                    sx={{
+                      bgcolor: '#6B7280',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: '0.85rem',
+                    }}
+                  />
+                </Box>
               </Card>
             </Grid>
           </Grid>
